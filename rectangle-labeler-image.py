@@ -132,7 +132,6 @@ global clone
 image = cv2.imread("Image_bidon.png")
 clone = image.copy()
 cv2.namedWindow(Image_name)
-cv2.createTrackbar('frame', 'Video', 0, num_frames, on_trackbar)
 cv2.createButton("Left Front Corner (LFC)", left_front_corner_choice, None, cv2.QT_PUSH_BUTTON, 0)
 cv2.createButton("Right Front Corner (RFC)", right_front_corner_choice, None, cv2.QT_PUSH_BUTTON, 0)
 cv2.createButton("Right Back Corner (RBC)", right_back_corner_choice, None, cv2.QT_PUSH_BUTTON, 0)
