@@ -24,19 +24,10 @@ def load_video_frames(video_file, num_frames=None):
     return frames, num_frames_update
 
 
-def set_frame_counter(frame_counter, num_frames):
-    # if the user has scrolled past the end, go to the beginning
-    if frame_counter == num_frames:
-        frame_counter = 0
-        # if user has scrolled to the left of the beginning, go to the end
-    elif frame_counter == -1:
-        frame_counter = num_frames - 1
-
-    return frame_counter
-
 def draw_points_and_lines():
     global points_labels, circle_colors, circle_radius, frame_counter, small_image, active_points, rectangle_color
 
+    print("draw_points : ", frame_counter)
     for i in range(8):
         if active_points[frame_counter, i] == True:
             mouse_click_position = (int(points_labels[label_keys[i]][0, frame_counter]), int(points_labels[label_keys[i]][1, frame_counter]))
@@ -184,21 +175,25 @@ while playVideo == True:
     key = cv2.waitKey(1) & 0xFF
 
     frame_counter = cv2.getTrackbarPos(Trackbar_name, Image_name)
-    frames_clone[frame_counter] = frames[frame_counter].copy()
     image_clone = frames_clone[frame_counter]
-    width, height, rgb = np.shape(image_clone)
     small_image = cv2.resize(image_clone, (int(round(width / ratio_image)), int(round(height / ratio_image))))
 
     if key == ord(','):  # if `<` then go back
+        print("frame_counter fleche -: ", frame_counter, ' -> ', frame_counter-1)
         frame_counter -= 1
-        frame_counter = set_frame_counter(frame_counter, num_frames)
         cv2.setTrackbarPos(Trackbar_name, Image_name, frame_counter)
+        image_clone = frames_clone[frame_counter]
+        small_image = cv2.resize(image_clone, (int(round(width / ratio_image)), int(round(height / ratio_image))))
+        cv2.imshow(Image_name, small_image)
         draw_points_and_lines()
 
     elif key == ord('.'):  # if `>` then advance
+        print("frame_counter fleche +: ", frame_counter, ' -> ', frame_counter+1)
         frame_counter += 1
-        frame_counter = set_frame_counter(frame_counter, num_frames)
         cv2.setTrackbarPos(Trackbar_name, Image_name, frame_counter)
+        image_clone = frames_clone[frame_counter]
+        small_image = cv2.resize(image_clone, (int(round(width / ratio_image)), int(round(height / ratio_image))))
+        cv2.imshow(Image_name, small_image)
         draw_points_and_lines()
 
     elif key == ord('x'):  # if `x` then quit
