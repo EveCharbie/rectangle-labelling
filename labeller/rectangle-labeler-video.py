@@ -126,7 +126,7 @@ Image_name = "Video"
 Trackbar_name = "Frames"
 ratio_image = 1.5
 
-movie_file = 'PI world v1 ps1.mp4'
+movie_file = '../input/PI world v1 ps1.mp4'
 frames, num_frames = load_video_frames(movie_file)
 frames_clone = frames.copy()
 points_labels = {"left_front_corner": np.zeros((2, len(frames))),

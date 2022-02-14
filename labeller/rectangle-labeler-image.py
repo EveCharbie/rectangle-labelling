@@ -2,6 +2,7 @@
 import cv2
 import numpy as np
 from tqdm.notebook import tqdm
+import pickle
 
 
 def draw_points_and_lines():
@@ -129,7 +130,10 @@ Image_name = "Image_bidon.png"
 ############################### code beginning #######################################################################
 global clone
 
-image = cv2.imread("Image_bidon.png")
+# image = cv2.imread('../input/PI world v1 ps1_181.jpg')
+file = open(f"../output/PI world v1 ps1_181_undistorted_images.pkl", "rb")
+image = pickle.load(file)
+
 clone = image.copy()
 cv2.namedWindow(Image_name)
 cv2.createButton("Left Front Corner (LFC)", left_front_corner_choice, None, cv2.QT_PUSH_BUTTON, 0)
@@ -143,7 +147,10 @@ cv2.createButton("Left Back Border (LBB)", left_back_border_choice, None, cv2.QT
 cv2.setMouseCallback(Image_name, circle_positioning)
 
 while True:
-    cv2.imshow(Image_name, clone)
+    ratio_image = 1.5
+    width, height, rgb = np.shape(clone)
+    small_image = cv2.resize(clone, (int(round(width / ratio_image)), int(round(height / ratio_image))))
+    cv2.imshow(Image_name, small_image)
     key = cv2.waitKey(1) & 0xFF
 
 cv2.destroyAllWindows()
