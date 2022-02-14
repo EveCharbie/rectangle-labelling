@@ -57,9 +57,13 @@ def nothing(x):
 	return
 
 ratio_image = 1.5
-movie_file = '../input/PI world v1 ps1.mp4'
+movie_file_path = '../input/'
+movie_file_name = 'PI world v1 ps1.mp4'
+movie_file = movie_file_path + movie_file_name
 frames, num_frames = load_video_frames(movie_file)
-num_frames = 30 ######################################################
+min_frames = 600
+max_frames = 650
+num_frames = max_frames - min_frames  # 30 ######################################################
 frames_clone = frames.copy()
 
 Image_name = "Video"
@@ -74,14 +78,14 @@ width, height, rgb = np.shape(image_clone)
 
 # small_images = [np.zeros((DIM[0], DIM[1], 3), dtype=np.int8) for i in range(num_frames)]
 undistorted_images = [np.zeros((DIM[0], DIM[1], 3), dtype=np.int8) for i in range(num_frames)]
-for i in range(num_frames):
+for i in range(min_frames, max_frames):
 	# small_images[i] = cv2.resize(frames_clone[i], (int(round(width / ratio_image)), int(round(height / ratio_image))))
-	undistorted_images[i] = undistort(frames[i], balance=0.0)  # small_images[i]
+	undistorted_images[i - min_frames] = undistort(frames[i], balance=0.0)  # small_images[i]
 
-with open(f'../output/{movie_file[:-4]}_undistorted_images.pkl', 'wb') as handle:
+with open(f'../output/{movie_file_name[:-4]}_undistorted_images.pkl', 'wb') as handle:
 	pickle.dump(undistorted_images, handle)
 
-while playVideo == True:
+while playVideo:
 
 	key = cv2.waitKey(1) & 0xFF
 

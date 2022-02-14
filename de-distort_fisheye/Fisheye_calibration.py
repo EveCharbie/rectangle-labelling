@@ -8,6 +8,7 @@ import cv2
 import numpy as np
 import os
 import glob
+import pickle
 
 CHECKERBOARD = (6,9)
 
@@ -58,3 +59,6 @@ print("Found " + str(N_OK) + " valid images for calibration")
 print("DIM = " + str(_img_shape[::-1]))
 print("K = np.array(" + str(K.tolist()) + ")")
 print("D = np.array(" + str(D.tolist()) + ")")
+
+with open(f'../output/Fisheye_KD_matrix', 'wb') as handle:
+    pickle.dump([DIM, K, D], handle)
