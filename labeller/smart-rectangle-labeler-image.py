@@ -63,7 +63,7 @@ def image_treatment(*args):
 
     lines_new_vert, lines_new_horz, lines_new_vert_index, lines_new_horz_index = find_lines_through_pixels(lines_last_frame, borders_last_frame, lines_points_index, borders_points_index, unique_lines_index, unique_borders_index)
     points_new = find_points_next_frame(lines_new_vert, lines_new_horz, lines_new_vert_index, lines_new_horz_index)
-    fixation_pixel = distort_to_rectangle(points_new)
+    fixation_pixel = distort_to_rectangle(points_new, lines_new_vert_index, lines_new_horz_index)
     # ajouter au graph de taille definie + tous les rectangles
     # save fixation pixel
     # save figure distorted ?
@@ -361,7 +361,7 @@ def find_points_next_frame(lines_new_vert, lines_new_horz, lines_new_vert_index,
     return points
 
 
-def distort_to_rectangle(points):
+def distort_to_rectangle(points, lines_new_vert_index, lines_new_horz_index):
     def order_points(pts):
         rect = np.zeros((4, 2), dtype="float32")
         s = pts.sum(axis=1)
@@ -372,27 +372,35 @@ def distort_to_rectangle(points):
         rect[3] = pts[np.argmax(diff)]
         return rect
 
-    def four_point_transform(image_to_distort, four_vertices):
-        global width_rectangle, height_rectangle
-        # (top_left, top_right, bottom_right, bottom_left) = four_vertices
-        # widthA = np.sqrt(((bottom_right[0] - bottom_left[0]) ** 2) + ((bottom_right[1] - bottom_left[1]) ** 2))
-        # widthB = np.sqrt(((top_right[0] - top_left[0]) ** 2) + ((top_right[1] - top_left[1]) ** 2))
-        # maxWidth = max(int(widthA), int(widthB))
-        maxWidth = width_rectangle
-        # heightA = np.sqrt(((top_right[0] - bottom_right[0]) ** 2) + ((top_right[1] - bottom_right[1]) ** 2))
-        # heightB = np.sqrt(((top_left[0] - bottom_left[0]) ** 2) + ((top_left[1] - bottom_left[1]) ** 2))
-        # maxHeight = max(int(heightA), int(heightB))
-        maxHeight = height_rectangle
+    def four_point_transform(image_to_distort, four_vertices_transform, position_corners_to_map):
+        wraped_width = int(abs(position_corners_to_map[0, 0] - position_corners_to_map[1, 0]))
+        wraped_height = int(abs(position_corners_to_map[0, 1] - position_corners_to_map[3, 1]))
         dst = np.array([
-            [0, 0],
-            [maxWidth, 0], # -1
-            [maxWidth, maxHeight],
-            [0, maxHeight]], dtype="float32") #################
-        M = cv2.getPerspectiveTransform(four_vertices, dst)
-        wraped = cv2.warpPerspective(image_to_distort, M, (maxWidth, maxHeight))
+            [position_corners_to_map[0, 0], position_corners_to_map[0, 1]],
+            [position_corners_to_map[1, 0], position_corners_to_map[1, 1]],
+            [position_corners_to_map[2, 0], position_corners_to_map[2, 1]],
+            [position_corners_to_map[3, 0], position_corners_to_map[3, 1]]], dtype="float32")
+        M = cv2.getPerspectiveTransform(four_vertices_transform, dst)
+        wraped = cv2.warpPerspective(image_to_distort, M, (wraped_width, wraped_height))
         wraped = np.round(wraped)
         wraped = wraped.astype(np.uint8)
         return wraped
+
+    def which_rectangle_is_visible(lines_new_vert_index, lines_new_horz_index):
+
+        for i in range(len(rectangle_definitions)):
+            sum_rectangle_lines = 0
+            for j in range(4):
+                if rectangle_definitions[i][j] in lines_new_vert_index or rectangle_definitions[i][j] in lines_new_horz_index:
+                    sum_rectangle_lines += 1
+            if sum_rectangle_lines == 4:
+                break
+        if i == len(rectangle_definitions)-1 and sum_rectangle_lines == 4:
+            position_corners_to_map = None
+        else:
+            position_corners_to_map = rectangle_points_definition[i]
+
+        return position_corners_to_map
 
     # Finding the four corner points and ordering them
     pts = np.asarray(points)
@@ -435,26 +443,31 @@ def distort_to_rectangle(points):
 
     # Perspective transform to get the warped image
     four_vertices_transform = four_vertices_transform.astype(np.float32)
-    wraped = four_point_transform(image_to_distort, four_vertices_transform)
+    position_corners_to_map = which_rectangle_is_visible(lines_new_vert_index, lines_new_horz_index)
+    wraped = four_point_transform(image_to_distort, four_vertices_transform, position_corners_to_map)
 
-    # plt.figure()
-    # image_to_distort = image_to_distort.astype(np.uint8)
-    # plt.imshow(image_to_distort)
-    # for i in range(4):
-    #     plt.plot(four_vertices_transform[i, 0], four_vertices_transform[i, 1], '.r')
-    # plt.show()
+
+    plt.figure()
+    image_to_distort = image_to_distort.astype(np.uint8)
+    plt.imshow(image_to_distort)
+    for i in range(4):
+        plt.plot(four_vertices_transform[i, 0], four_vertices_transform[i, 1], '.r')
+    plt.show()
     #
     # # Displaying the results
-    # plt.figure()
-    # plt.imshow(wraped)
-    # plt.show()
+    plt.figure()
+    plt.imshow(wraped)
+    plt.show()
 
     mask = cv2.inRange(wraped, (0, 255, 0), (0, 255, 0))
-    fixation_region_y, fixation_region_x = np.where(mask != 0)
-    fixation_pixel = np.round(np.array([np.mean(fixation_region_x), np.mean(fixation_region_y)]))
-    fixation_pixel = fixation_pixel.astype(int)
+    if len(np.where(mask != 0)[0]) > 0:
+        fixation_region_y, fixation_region_x = np.where(mask != 0)
+        fixation_pixel = np.round(np.array([np.mean(fixation_region_x), np.mean(fixation_region_y)]))
+        fixation_pixel = fixation_pixel.astype(int)
+        cv2.circle(wraped, (fixation_pixel[0], fixation_pixel[1]), 1, color=(0, 255, 255), thickness=-1)
+    else:
+        fixation_pixel = None
 
-    cv2.circle(wraped, (fixation_pixel[0], fixation_pixel[1]), 1, color=(0, 255, 255), thickness=-1)
     cv2.line(wraped, (53, 0), (53, 428), (0, 0, 0), 2)
     cv2.line(wraped, (161, 0), (161, 428), (0, 0, 0), 2)
     cv2.line(wraped, (0, 107), (214, 107), (0, 0, 0), 2)
@@ -487,7 +500,7 @@ def point_choice(*args):
 
 ############################### code beginning #######################################################################
 global small_image, number_of_points_to_label, width_small, height_small, label_keys, points_labels, frames_clone
-global ratio_image, Image_name, borders_points, borders_pairs, fixation, width_rectangle, height_rectangle
+global ratio_image, Image_name, borders_points, borders_pairs, fixation, width_rectangle, height_rectangle, rectangle_definitions
 
 circle_radius = 5
 line_color = (1, 1, 1)
@@ -725,6 +738,69 @@ points_definitions[6, 10] = 18
 points_definitions[10, 6] = 18
 points_definitions[6, 11] = 19
 points_definitions[11, 6] = 19
+
+rectangle_definitions = np.zeros((11, 4))
+rectangle_definitions[0, :] = np.array([0, 6, 7, 11])
+rectangle_definitions[1, :] = np.array([0, 7, 11, 5])
+rectangle_definitions[2, :] = np.array([1, 7, 11, 6])
+rectangle_definitions[3, :] = np.array([0, 7, 10, 6])
+rectangle_definitions[4, :] = np.array([0, 8, 11, 6])
+rectangle_definitions[5, :] = np.array([1, 5, 7, 11])
+rectangle_definitions[6, :] = np.array([0, 7, 11, 1])
+rectangle_definitions[7, :] = np.array([5, 7, 11, 6])
+rectangle_definitions[8, :] = np.array([2, 4, 8, 10])
+rectangle_definitions[9, :] = np.array([0, 7, 8, 6])
+rectangle_definitions[10, :] = np.array([0, 10, 11, 6])
+
+rectangle_points_definition = np.zeros((11, 4, 2))
+rectangle_points_definition[0, :, :] = np.array([[0, 0],
+                                                 [214, 0],
+                                                 [214, 428],
+                                                 [0, 428]])
+rectangle_points_definition[1, :, :] = np.array([[0, 0],
+                                                 [214, 0],
+                                                 [214, 322],
+                                                 [0, 322]])
+rectangle_points_definition[2, :, :] = np.array([[0, 107],
+                                                 [214, 107],
+                                                 [214, 428],
+                                                 [0, 428]])
+rectangle_points_definition[3, :, :] = np.array([[53, 0],
+                                                 [214, 0],
+                                                 [214, 428],
+                                                 [53, 428]])
+rectangle_points_definition[4, :, :] = np.array([[0, 0],
+                                                 [161, 0],
+                                                 [161, 428],
+                                                 [0, 428]])
+rectangle_points_definition[5, :, :] = np.array([[0, 107],
+                                                 [214, 107],
+                                                 [214, 322],
+                                                 [0, 322]])
+rectangle_points_definition[6, :, :] = np.array([[0, 0],
+                                                 [214, 0],
+                                                 [214, 107],
+                                                 [0, 107]])
+rectangle_points_definition[7, :, :] = np.array([[0, 322],
+                                                 [214, 322],
+                                                 [214, 428],
+                                                 [0, 428]])
+rectangle_points_definition[8, :, :] = np.array([[53, 160],
+                                                 [161, 160],
+                                                 [161, 268],
+                                                 [52, 268]])
+rectangle_points_definition[9, :, :] = np.array([[0, 0],
+                                                 [53, 0],
+                                                 [53, 428],
+                                                 [0, 428]])
+rectangle_points_definition[10, :, :] = np.array([[161, 0],
+                                                  [214, 0],
+                                                  [214, 428],
+                                                  [0, 428]])
+
+
+
+
 
 # points order on trampoline
 # 0 - 1 - 2 - 3
