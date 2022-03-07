@@ -32,17 +32,12 @@ def xy_to_rtheta(x0, x1, y0, y1):
     r = x0 * np.cos(theta) + y0 * np.sin(theta)
     return (r, theta)
 
-# def rtheta_to_xy(r, theta):
-#     # to be implemented if needed with intial guess points + if satatements
-#     return x0, x1, y0, y1
 
 def image_treatment(*args):
     global label_keys, number_of_points_to_label, points_labels, small_image
 
-    # next_frame_points_labels = np.zeros((2, number_of_points_to_label))
     last_frame_points_labels = np.zeros((2, number_of_points_to_label))
     for i, key in enumerate(label_keys):
-        # next_frame_points_labels[:, i] = points_labels[key]
         last_frame_points_labels[:, i] = points_labels[key]
 
     lines_last_frame, borders_last_frame, lines_points_index, borders_points_index, unique_lines_index, unique_borders_index = find_lines_to_search_for(last_frame_points_labels)
@@ -61,9 +56,10 @@ def image_treatment(*args):
     #              np.array([borders_last_frame[i][2], borders_last_frame[i][3]]), '-k')
     # plt.show()
 
-    lines_new_vert, lines_new_horz, lines_new_vert_index, lines_new_horz_index = find_lines_through_pixels(lines_last_frame, borders_last_frame, lines_points_index, borders_points_index, unique_lines_index, unique_borders_index)
-    points_new = find_points_next_frame(lines_new_vert, lines_new_horz, lines_new_vert_index, lines_new_horz_index)
-    fixation_pixel = distort_to_rectangle(points_new, lines_new_vert_index, lines_new_horz_index)
+    if len(unique_lines_index) > 0 or len(unique_borders_index) > 0:
+        lines_new_vert, lines_new_horz, lines_new_vert_index, lines_new_horz_index = find_lines_through_pixels(lines_last_frame, borders_last_frame, lines_points_index, borders_points_index, unique_lines_index, unique_borders_index)
+        points_new = find_points_next_frame(lines_new_vert, lines_new_horz, lines_new_vert_index, lines_new_horz_index)
+        fixation_pixel = distort_to_rectangle(points_new, lines_new_vert_index, lines_new_horz_index)
     # ajouter au graph de taille definie + tous les rectangles
     # save fixation pixel
     # save figure distorted ?
@@ -259,8 +255,8 @@ def find_pixel_close_to_lines(lines, image_gray):
     slack = 5
     pixels_close = [np.zeros((np.shape(image_gray)[0], np.shape(image_gray)[1])) for i in range(len(lines))]
 
-    # plt.figure()
-    # plt.imshow(image_gray)
+    plt.figure()
+    plt.imshow(image_gray)
     for ix in range(np.shape(image_gray)[1]):
         print(f'Pixels X {ix}')
         for iy in range(np.shape(image_gray)[0]):
@@ -268,14 +264,14 @@ def find_pixel_close_to_lines(lines, image_gray):
                 vect_line = np.array([line[1], line[3]]) - np.array([line[0], line[2]])
                 vect_to_point = np.array([ix, iy]) - np.array([line[0], line[2]])
                 distance = np.abs(np.cross(vect_line, vect_to_point)) / np.linalg.norm(vect_line)
-                # if image_gray[iy, ix] > 0:
-                #     plt.plot(np.array([ix]), np.array([iy]), 'ow')
-                # if distance < slack:
-                #     plt.plot(np.array([ix]), np.array([iy]), '.y')
+                if image_gray[iy, ix] > 0:
+                    plt.plot(np.array([ix]), np.array([iy]), 'ow')
+                if distance < slack:
+                    plt.plot(np.array([ix]), np.array([iy]), '.y')
                 if image_gray[iy, ix] > 0 and distance < slack:
                     pixels_close[iline][iy, ix] = 1
-                    # plt.plot(np.array([ix]), np.array([iy]), '.m')
-    # plt.show()
+                    plt.plot(np.array([ix]), np.array([iy]), '.m')
+    plt.show()
 
     # fig, ax = plt.subplots(3, 4)
     # axs = ax.ravel()
@@ -388,19 +384,22 @@ def distort_to_rectangle(points, lines_new_vert_index, lines_new_horz_index):
 
     def which_rectangle_is_visible(lines_new_vert_index, lines_new_horz_index):
 
-        for i in range(len(rectangle_definitions)):
+        for i in range(len(rectangle_lines_definitions)):
             sum_rectangle_lines = 0
             for j in range(4):
-                if rectangle_definitions[i][j] in lines_new_vert_index or rectangle_definitions[i][j] in lines_new_horz_index:
+                if rectangle_lines_definitions[i][j] in lines_new_vert_index or rectangle_lines_definitions[i][j] in lines_new_horz_index:
                     sum_rectangle_lines += 1
             if sum_rectangle_lines == 4:
                 break
-        if i == len(rectangle_definitions)-1 and sum_rectangle_lines == 4:
+        if i == len(rectangle_lines_definitions)-1 and sum_rectangle_lines == 4:
             position_corners_to_map = None
         else:
-            position_corners_to_map = rectangle_points_definition[i]
+            position_corners_to_map = rectangle_points_definitions[i]
 
-        return position_corners_to_map
+        pts = np.zeros((4, 2), dtype="float32")
+        four_vertices = order_points(pts)
+
+        return position_corners_to_map, four_vertices
 
     # Finding the four corner points and ordering them
     pts = np.asarray(points)
@@ -411,7 +410,6 @@ def distort_to_rectangle(points, lines_new_vert_index, lines_new_horz_index):
     min_top = np.min(four_vertices[1, :])
     max_bottom = np.max(four_vertices[1, :])
 
-    # image_to_distort = cv2.cvtColor(small_image, cv2.COLOR_RGB2GRAY)
     image_to_distort = small_image.copy()
 
     four_vertices_transform = np.zeros((4, 2))
@@ -500,7 +498,7 @@ def point_choice(*args):
 
 ############################### code beginning #######################################################################
 global small_image, number_of_points_to_label, width_small, height_small, label_keys, points_labels, frames_clone
-global ratio_image, Image_name, borders_points, borders_pairs, fixation, width_rectangle, height_rectangle, rectangle_definitions
+global ratio_image, Image_name, borders_points, borders_pairs, fixation, rectangle_lines_definitions
 
 circle_radius = 5
 line_color = (1, 1, 1)
@@ -516,8 +514,6 @@ Image_name = "Video"
 Image_name_approx = "Video_approx"
 Trackbar_name = "Frames"
 ratio_image = 5
-width_rectangle = 214
-height_rectangle = 428
 
 file = open(f"../output/PI world v1 ps1_181_undistorted_images.pkl", "rb")
 image = pickle.load(file)
@@ -739,61 +735,74 @@ points_definitions[10, 6] = 18
 points_definitions[6, 11] = 19
 points_definitions[11, 6] = 19
 
-rectangle_definitions = np.zeros((11, 4))
-rectangle_definitions[0, :] = np.array([0, 6, 7, 11])
-rectangle_definitions[1, :] = np.array([0, 7, 11, 5])
-rectangle_definitions[2, :] = np.array([1, 7, 11, 6])
-rectangle_definitions[3, :] = np.array([0, 7, 10, 6])
-rectangle_definitions[4, :] = np.array([0, 8, 11, 6])
-rectangle_definitions[5, :] = np.array([1, 5, 7, 11])
-rectangle_definitions[6, :] = np.array([0, 7, 11, 1])
-rectangle_definitions[7, :] = np.array([5, 7, 11, 6])
-rectangle_definitions[8, :] = np.array([2, 4, 8, 10])
-rectangle_definitions[9, :] = np.array([0, 7, 8, 6])
-rectangle_definitions[10, :] = np.array([0, 10, 11, 6])
+rectangle_lines_definitions = np.zeros((11, 4))
+rectangle_lines_definitions[0, :] = np.array([0, 3, 19, 16])
+rectangle_lines_definitions[1, :] = np.array([0, 3, 15, 14])
+rectangle_lines_definitions[2, :] = np.array([4, 5, 19, 16])
+rectangle_lines_definitions[3, :] = np.array([1, 2, 19, 17])
+rectangle_lines_definitions[4, :] = np.array([0, 2, 18, 16])
+rectangle_lines_definitions[5, :] = np.array([4, 5, 15, 14])
+rectangle_lines_definitions[6, :] = np.array([0, 3, 5, 4])
+rectangle_lines_definitions[7, :] = np.array([14, 15, 19, 16])
+rectangle_lines_definitions[8, :] = np.array([6, 7, 13, 12])
+rectangle_lines_definitions[9, :] = np.array([0, 1, 17, 16])
+rectangle_lines_definitions[10, :] = np.array([2, 3, 19, 18])
 
-rectangle_points_definition = np.zeros((11, 4, 2))
-rectangle_points_definition[0, :, :] = np.array([[0, 0],
+rectangle_points_definitions = np.zeros((11, 4))
+rectangle_points_definitions[0, :] = np.array([0, 6, 7, 11])
+rectangle_points_definitions[1, :] = np.array([0, 7, 11, 5])
+rectangle_points_definitions[2, :] = np.array([1, 7, 11, 6])
+rectangle_points_definitions[3, :] = np.array([0, 7, 10, 6])
+rectangle_points_definitions[4, :] = np.array([0, 8, 11, 6])
+rectangle_points_definitions[5, :] = np.array([1, 5, 7, 11])
+rectangle_points_definitions[6, :] = np.array([0, 7, 11, 1])
+rectangle_points_definitions[7, :] = np.array([5, 7, 11, 6])
+rectangle_points_definitions[8, :] = np.array([2, 4, 8, 10])
+rectangle_points_definitions[9, :] = np.array([0, 7, 8, 6])
+rectangle_points_definitions[10, :] = np.array([0, 10, 11, 6])
+
+rectangle_points_position_definition = np.zeros((11, 4, 2))
+rectangle_points_position_definition[0, :, :] = np.array([[0, 0],
                                                  [214, 0],
                                                  [214, 428],
                                                  [0, 428]])
-rectangle_points_definition[1, :, :] = np.array([[0, 0],
+rectangle_points_position_definition[1, :, :] = np.array([[0, 0],
                                                  [214, 0],
                                                  [214, 322],
                                                  [0, 322]])
-rectangle_points_definition[2, :, :] = np.array([[0, 107],
+rectangle_points_position_definition[2, :, :] = np.array([[0, 107],
                                                  [214, 107],
                                                  [214, 428],
                                                  [0, 428]])
-rectangle_points_definition[3, :, :] = np.array([[53, 0],
+rectangle_points_position_definition[3, :, :] = np.array([[53, 0],
                                                  [214, 0],
                                                  [214, 428],
                                                  [53, 428]])
-rectangle_points_definition[4, :, :] = np.array([[0, 0],
+rectangle_points_position_definition[4, :, :] = np.array([[0, 0],
                                                  [161, 0],
                                                  [161, 428],
                                                  [0, 428]])
-rectangle_points_definition[5, :, :] = np.array([[0, 107],
+rectangle_points_position_definition[5, :, :] = np.array([[0, 107],
                                                  [214, 107],
                                                  [214, 322],
                                                  [0, 322]])
-rectangle_points_definition[6, :, :] = np.array([[0, 0],
+rectangle_points_position_definition[6, :, :] = np.array([[0, 0],
                                                  [214, 0],
                                                  [214, 107],
                                                  [0, 107]])
-rectangle_points_definition[7, :, :] = np.array([[0, 322],
+rectangle_points_position_definition[7, :, :] = np.array([[0, 322],
                                                  [214, 322],
                                                  [214, 428],
                                                  [0, 428]])
-rectangle_points_definition[8, :, :] = np.array([[53, 160],
+rectangle_points_position_definition[8, :, :] = np.array([[53, 160],
                                                  [161, 160],
                                                  [161, 268],
                                                  [52, 268]])
-rectangle_points_definition[9, :, :] = np.array([[0, 0],
+rectangle_points_position_definition[9, :, :] = np.array([[0, 0],
                                                  [53, 0],
                                                  [53, 428],
                                                  [0, 428]])
-rectangle_points_definition[10, :, :] = np.array([[161, 0],
+rectangle_points_position_definition[10, :, :] = np.array([[161, 0],
                                                   [214, 0],
                                                   [214, 428],
                                                   [0, 428]])
