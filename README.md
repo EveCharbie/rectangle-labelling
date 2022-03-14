@@ -11,7 +11,7 @@ conda create --name [name] python=3.9
 
 conda activate [name]
 
-conda install -c conda-forge scipy numpy opencv pytorch pickle tqmd
+conda install -c conda-forge scipy numpy opencv pytorch pickle tqmd jupyter ipywidgets
 
 
 # Workflow:
