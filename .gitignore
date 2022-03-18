@@ -129,3 +129,5 @@ dmypy.json
 .pyre/
 
 output/Cachette/
+
+.DS_Store
