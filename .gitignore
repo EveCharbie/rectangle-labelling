@@ -131,3 +131,5 @@ dmypy.json
 output/Cachette/
 
 .DS_Store
+
+*.pkl
