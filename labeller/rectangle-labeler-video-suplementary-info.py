@@ -214,13 +214,13 @@ def find_points_next_frame(lines_new_vert, lines_new_horz, lines_new_vert_index,
         x0, y0 = int(np.round(x0)), int(np.round(y0))
         return [[x0, y0]]
 
-    if len(np.shape(lines_new_vert)) > 1:
-        lines_new_vert_order = np.argsort(np.abs(lines_new_vert[:, 0]))
-        lines_new_vert = lines_new_vert[lines_new_vert_order]
-
-    if len(np.shape(lines_new_horz)) > 1:
-        lines_new_horz_order = np.argsort(np.abs(lines_new_horz[:, 0]))
-        lines_new_horz = lines_new_horz[lines_new_horz_order]
+    # if len(np.shape(lines_new_vert)) > 1:
+    #     lines_new_vert_order = np.argsort(np.abs(lines_new_vert[:, 0]))
+    #     lines_new_vert = lines_new_vert[lines_new_vert_order]
+    #
+    # if len(np.shape(lines_new_horz)) > 1:
+    #     lines_new_horz_order = np.argsort(np.abs(lines_new_horz[:, 0]))
+    #     lines_new_horz = lines_new_horz[lines_new_horz_order]
 
     # Finding the intersection points of the lines
     points = []
@@ -536,13 +536,13 @@ def resize_image_for_disposition(wraped, rectangle_number):
 
 def empty_trampo_bed_image():
     global trampo_bed_shape_image
-    trampo_bed_shape_image = np.ones((428, 214, 3), dtype="float32") * 0.5
-    cv2.line(trampo_bed_shape_image, (53, 0), (53, 428), (0, 0, 0), 2)
-    cv2.line(trampo_bed_shape_image, (161, 0), (161, 428), (0, 0, 0), 2)
-    cv2.line(trampo_bed_shape_image, (0, 107), (214, 107), (0, 0, 0), 2)
-    cv2.line(trampo_bed_shape_image, (0, 322), (214, 322), (0, 0, 0), 2)
-    cv2.line(trampo_bed_shape_image, (53, 160), (161, 160), (0, 0, 0), 2)
-    cv2.line(trampo_bed_shape_image, (53, 268), (161, 268), (0, 0, 0), 2)
+    trampo_bed_shape_image = np.ones((428, 214, 3), dtype=np.uint8) * 125
+    cv2.line(trampo_bed_shape_image, (53, 0), (53, 428), (180, 180, 180), 2)
+    cv2.line(trampo_bed_shape_image, (161, 0), (161, 428), (180, 180, 180), 2)
+    cv2.line(trampo_bed_shape_image, (0, 107), (214, 107), (180, 180, 180), 2)
+    cv2.line(trampo_bed_shape_image, (0, 322), (214, 322), (180, 180, 180), 2)
+    cv2.line(trampo_bed_shape_image, (53, 160), (161, 160), (180, 180, 180), 2)
+    cv2.line(trampo_bed_shape_image, (53, 268), (161, 268), (180, 180, 180), 2)
     return
 
 def distort_to_rectangle(lines_new_vert_index, lines_new_horz_index):
@@ -556,11 +556,7 @@ def distort_to_rectangle(lines_new_vert_index, lines_new_horz_index):
         #     [wraped_width, 0],
         #     [wraped_width, wraped_height],
         #     [0, wraped_height]], dtype="float32")
-        dst = np.array([
-            [position_corners_to_map[0, 0], position_corners_to_map[0, 1]],
-            [position_corners_to_map[1, 0], position_corners_to_map[1, 1]],
-            [position_corners_to_map[2, 0], position_corners_to_map[2, 1]],
-            [position_corners_to_map[3, 0], position_corners_to_map[3, 1]]], dtype="float32")
+        dst =  position_corners_to_map.astype("float32")
         M = cv2.getPerspectiveTransform(four_vertices_transform, dst)
         wraped = cv2.warpPerspective(image_to_distort, M, (width_small, height_small), borderMode=cv2.BORDER_CONSTANT, borderValue=(0,0,0)) # wraped_width, wraped_height
         wraped = np.round(wraped)
@@ -671,12 +667,12 @@ def distort_to_rectangle(lines_new_vert_index, lines_new_horz_index):
         # for i in range(len(eye_frames)):
         #     cv2.circle(trampo_bed_shape_image, (int(csv_eye_tracking[eye_frames[i], 5]), int(csv_eye_tracking[eye_frames[i], 6])), 1, color=(0, 255, 255), thickness=3)
 
-        cv2.line(trampo_bed_shape_image, (53, 0), (53, 428), (0, 0, 0), 2)
-        cv2.line(trampo_bed_shape_image, (161, 0), (161, 428), (0, 0, 0), 2)
-        cv2.line(trampo_bed_shape_image, (0, 107), (214, 107), (0, 0, 0), 2)
-        cv2.line(trampo_bed_shape_image, (0, 322), (214, 322), (0, 0, 0), 2)
-        cv2.line(trampo_bed_shape_image, (53, 160), (161, 160), (0, 0, 0), 2)
-        cv2.line(trampo_bed_shape_image, (53, 268), (161, 268), (0, 0, 0), 2)
+        cv2.line(trampo_bed_shape_image, (53, 0), (53, 428), (180, 180, 180), 2)
+        cv2.line(trampo_bed_shape_image, (161, 0), (161, 428), (180, 180, 180), 2)
+        cv2.line(trampo_bed_shape_image, (0, 107), (214, 107), (180, 180, 180), 2)
+        cv2.line(trampo_bed_shape_image, (0, 322), (214, 322), (180, 180, 180), 2)
+        cv2.line(trampo_bed_shape_image, (53, 160), (161, 160), (180, 180, 180), 2)
+        cv2.line(trampo_bed_shape_image, (53, 268), (161, 268), (180, 180, 180), 2)
         # cv2.imshow("Distorted", trampo_bed_shape_image)
 
         return
@@ -706,26 +702,26 @@ def put_text():
     elif curent_AOI_label["Trampoline"][frame_counter] == 1:
         cv2.putText(trampo_bed_shape_image, "Trampoline", org, font, fontScale, color, thickness, cv2.LINE_AA)
 
-    cv2.putText(trampo_bed_shape_image, "0", (0+3, 0+13), font, fontScale, (0, 0, 0), thickness, cv2.LINE_AA)
-    cv2.putText(trampo_bed_shape_image, "1", (53+3, 0+13), font, fontScale, (0, 0, 0), thickness, cv2.LINE_AA)
-    cv2.putText(trampo_bed_shape_image, "2", (161-22, 0+13), font, fontScale, (0, 0, 0), thickness, cv2.LINE_AA)
-    cv2.putText(trampo_bed_shape_image, "3", (214-22, 0+13), font, fontScale, (0, 0, 0), thickness, cv2.LINE_AA)
-    cv2.putText(trampo_bed_shape_image, "4", (0+3, 107-3), font, fontScale, (0, 0, 0), thickness, cv2.LINE_AA)
-    cv2.putText(trampo_bed_shape_image, "5", (53+3, 107-3), font, fontScale, (0, 0, 0), thickness, cv2.LINE_AA)
-    cv2.putText(trampo_bed_shape_image, "6", (161-22, 107-3), font, fontScale, (0, 0, 0), thickness, cv2.LINE_AA)
-    cv2.putText(trampo_bed_shape_image, "7", (214-22, 107-3), font, fontScale, (0, 0, 0), thickness, cv2.LINE_AA)
-    cv2.putText(trampo_bed_shape_image, "8", (53+3, 160-3), font, fontScale, (0, 0, 0), thickness, cv2.LINE_AA)
-    cv2.putText(trampo_bed_shape_image, "9", (161-22, 160-3), font, fontScale, (0, 0, 0), thickness, cv2.LINE_AA)
-    cv2.putText(trampo_bed_shape_image, "q", (53+3, 268-3), font, fontScale, (0, 0, 0), thickness, cv2.LINE_AA)
-    cv2.putText(trampo_bed_shape_image, "w", (161-22, 268-3), font, fontScale, (0, 0, 0), thickness, cv2.LINE_AA)
-    cv2.putText(trampo_bed_shape_image, "e", (0+3, 322-3), font, fontScale, (0, 0, 0), thickness, cv2.LINE_AA)
-    cv2.putText(trampo_bed_shape_image, "r", (53+3, 322-3), font, fontScale, (0, 0, 0), thickness, cv2.LINE_AA)
-    cv2.putText(trampo_bed_shape_image, "t", (161-22, 322-3), font, fontScale, (0, 0, 0), thickness, cv2.LINE_AA)
-    cv2.putText(trampo_bed_shape_image, "y", (214-22, 322-3), font, fontScale, (0, 0, 0), thickness, cv2.LINE_AA)
-    cv2.putText(trampo_bed_shape_image, "u", (0+3, 428-3), font, fontScale, (0, 0, 0), thickness, cv2.LINE_AA)
-    cv2.putText(trampo_bed_shape_image, "i", (53+3, 428-3), font, fontScale, (0, 0, 0), thickness, cv2.LINE_AA)
-    cv2.putText(trampo_bed_shape_image, "o", (161-22, 428-3), font, fontScale, (0, 0, 0), thickness, cv2.LINE_AA)
-    cv2.putText(trampo_bed_shape_image, "p", (214-22, 428-3), font, fontScale, (0, 0, 0), thickness, cv2.LINE_AA)
+    cv2.putText(trampo_bed_shape_image, "0", (0+3, 0+13), font, fontScale, (180, 180, 180), thickness, cv2.LINE_AA)
+    cv2.putText(trampo_bed_shape_image, "1", (53+3, 0+13), font, fontScale, (180, 180, 180), thickness, cv2.LINE_AA)
+    cv2.putText(trampo_bed_shape_image, "2", (161-22, 0+13), font, fontScale, (180, 180, 180), thickness, cv2.LINE_AA)
+    cv2.putText(trampo_bed_shape_image, "3", (214-22, 0+13), font, fontScale, (180, 180, 180), thickness, cv2.LINE_AA)
+    cv2.putText(trampo_bed_shape_image, "4", (0+3, 107-3), font, fontScale, (180, 180, 180), thickness, cv2.LINE_AA)
+    cv2.putText(trampo_bed_shape_image, "5", (53+3, 107-3), font, fontScale, (180, 180, 180), thickness, cv2.LINE_AA)
+    cv2.putText(trampo_bed_shape_image, "6", (161-22, 107-3), font, fontScale, (180, 180, 180), thickness, cv2.LINE_AA)
+    cv2.putText(trampo_bed_shape_image, "7", (214-22, 107-3), font, fontScale, (180, 180, 180), thickness, cv2.LINE_AA)
+    cv2.putText(trampo_bed_shape_image, "8", (53+3, 160-3), font, fontScale, (180, 180, 180), thickness, cv2.LINE_AA)
+    cv2.putText(trampo_bed_shape_image, "9", (161-22, 160-3), font, fontScale, (180, 180, 180), thickness, cv2.LINE_AA)
+    cv2.putText(trampo_bed_shape_image, "q", (53+3, 268-3), font, fontScale, (180, 180, 180), thickness, cv2.LINE_AA)
+    cv2.putText(trampo_bed_shape_image, "w", (161-22, 268-3), font, fontScale, (180, 180, 180), thickness, cv2.LINE_AA)
+    cv2.putText(trampo_bed_shape_image, "e", (0+3, 322-3), font, fontScale, (180, 180, 180), thickness, cv2.LINE_AA)
+    cv2.putText(trampo_bed_shape_image, "r", (53+3, 322-3), font, fontScale, (180, 180, 180), thickness, cv2.LINE_AA)
+    cv2.putText(trampo_bed_shape_image, "t", (161-22, 322-3), font, fontScale, (180, 180, 180), thickness, cv2.LINE_AA)
+    cv2.putText(trampo_bed_shape_image, "y", (214-22, 322-3), font, fontScale, (180, 180, 180), thickness, cv2.LINE_AA)
+    cv2.putText(trampo_bed_shape_image, "u", (0+3, 428-3), font, fontScale, (180, 180, 180), thickness, cv2.LINE_AA)
+    cv2.putText(trampo_bed_shape_image, "i", (53+3, 428-3), font, fontScale, (180, 180, 180), thickness, cv2.LINE_AA)
+    cv2.putText(trampo_bed_shape_image, "o", (161-22, 428-3), font, fontScale, (180, 180, 180), thickness, cv2.LINE_AA)
+    cv2.putText(trampo_bed_shape_image, "p", (214-22, 428-3), font, fontScale, (180, 180, 180), thickness, cv2.LINE_AA)
 
     cv2.imshow("Distorted", trampo_bed_shape_image)
     return
@@ -815,7 +811,7 @@ Trackbar_name = "Frames"
 ratio_image = 1.5
 
 movie_path = "../output/"
-movie_name = "PI world v1 ps1" # "df297219_0_0-43_588"  #
+movie_name = "df297219_0_0-43_588"  #"PI world v1 ps1" #
 movie_file = movie_path + movie_name + "_undistorted_images.pkl"
 
 # frames, num_frames = load_video_frames(movie_file)
