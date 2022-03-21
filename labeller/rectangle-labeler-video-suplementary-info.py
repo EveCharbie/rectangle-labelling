@@ -44,6 +44,7 @@ def draw_points_and_lines():
         if active_points[frame_counter, i] == True:
             mouse_click_position = (int(points_labels[label_keys[i]][0, frame_counter]), int(points_labels[label_keys[i]][1, frame_counter]))
             cv2.circle(small_image_clone_eye_before, mouse_click_position, circle_radius, color=circle_colors[i], thickness=-1)
+            cv2.putText(small_image_clone_eye_before, point_label_names[i], (mouse_click_position[0]+3, mouse_click_position[1]-3), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1, cv2.LINE_AA)
             for j in neighbors[i]:
                 if active_points[frame_counter, j] == True:
                     line_position = (int(points_labels[label_keys[j]][0, frame_counter]), int(points_labels[label_keys[j]][1, frame_counter]))
@@ -71,8 +72,13 @@ def image_treatment(*args):
 
     if len(unique_lines_index) > 0 or len(unique_borders_index) > 0:
         lines_new_vert, lines_new_horz, lines_new_vert_index, lines_new_horz_index = discriminate_lines_vert_vs_horz(lines_last_frame, borders_last_frame, lines_points_index, borders_points_index, unique_lines_index, unique_borders_index)
-        find_points_next_frame(lines_new_vert, lines_new_horz, lines_new_vert_index, lines_new_horz_index)
-        distort_to_rectangle(lines_new_vert_index, lines_new_horz_index)
+        points = find_points_next_frame(lines_new_vert, lines_new_horz, lines_new_vert_index, lines_new_horz_index)
+        if np.asarray(points).sum() == 0:
+            empty_trampo_bed_image()
+        else:
+            distort_to_rectangle(lines_new_vert_index, lines_new_horz_index)
+    else:
+        empty_trampo_bed_image()
 
     return
 
@@ -231,6 +237,9 @@ def find_points_next_frame(lines_new_vert, lines_new_horz, lines_new_vert_index,
 
     # Drawing the lines and points
     lines_to_plot = []
+    if lines_new_horz.shape != lines_new_vert.shape:
+        points = [[0, 0] for i in range(4)]
+        return points
     lines = np.vstack((lines_new_horz, lines_new_vert))
     for line in lines:
         if len(line) > 0:
@@ -261,87 +270,93 @@ def find_points_next_frame(lines_new_vert, lines_new_horz, lines_new_vert_index,
 
 def resize_image_for_disposition(wraped, rectangle_number):
 
-    ################################ voir le sens de l'image ############################################################
+    wraped_choped = wraped[int(rectangle_points_position_definition[rectangle_number][0, 1]): int(rectangle_points_position_definition[rectangle_number][3, 1]),
+                            int(rectangle_points_position_definition[rectangle_number][0, 0]): int(rectangle_points_position_definition[rectangle_number][1, 0]),
+                            :]
+
+    # plt.figure()
+    # plt.imshow(wraped_choped)
+    # plt.show()
 
     if rectangle_number == 0:
-        trampo_bed_shape_image = wraped.copy()
+        trampo_bed_shape_image = wraped_choped.copy()
     elif rectangle_number == 1:
         zeros_top = np.ones((428-322, 214, 3)) * 0.5
-        trampo_bed_shape_image = np.vstack((wraped, zeros_top))
+        trampo_bed_shape_image = np.vstack((wraped_choped, zeros_top))
     elif rectangle_number == 2:
         zeros_bottom = np.ones((107, 214, 3)) * 0.5
-        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped))
+        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped_choped))
     elif rectangle_number == 3:
         zeros_left = np.ones((428, 53, 3)) * 0.5
-        trampo_bed_shape_image = np.hstack((zeros_left, wraped))
+        trampo_bed_shape_image = np.hstack((zeros_left, wraped_choped))
     elif rectangle_number == 4:
         zeros_right = np.ones((428, 214-161, 3)) * 0.5
-        trampo_bed_shape_image = np.hstack((wraped, zeros_right))
+        trampo_bed_shape_image = np.hstack((wraped_choped, zeros_right))
     elif rectangle_number == 5:
         zeros_top = np.ones((428-233, 161, 3)) * 0.5
         zeros_right = np.ones((428, 214-161, 3)) * 0.5
-        trampo_bed_shape_image = np.vstack((wraped, zeros_top))
+        trampo_bed_shape_image = np.vstack((wraped_choped, zeros_top))
         trampo_bed_shape_image = np.hstack((trampo_bed_shape_image, zeros_right))
     elif rectangle_number == 6:
         zeros_top = np.ones((428-233, 161, 3)) * 0.5
         zeros_left = np.ones((428, 53, 3)) * 0.5
-        trampo_bed_shape_image = np.vstack((wraped, zeros_top))
+        trampo_bed_shape_image = np.vstack((wraped_choped, zeros_top))
         trampo_bed_shape_image = np.hstack((zeros_left, trampo_bed_shape_image))
     elif rectangle_number == 7:
         zeros_bottom = np.ones((107, 161, 3)) * 0.5
         zeros_right = np.ones((428, 214 - 161, 3)) * 0.5
-        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped))
+        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped_choped))
         trampo_bed_shape_image = np.hstack((trampo_bed_shape_image, zeros_right))
     elif rectangle_number == 8:
         zeros_bottom = np.ones((107, 161, 3)) * 0.5
         zeros_left = np.ones((428, 53, 3)) * 0.5
-        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped))
+        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped_choped))
         trampo_bed_shape_image = np.hstack((zeros_left, trampo_bed_shape_image))
     elif rectangle_number == 9:
         zeros_bottom = np.ones((107, 214, 3)) * 0.5
         zeros_top = np.ones((428 - 322, 214, 3)) * 0.5
-        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped))
+        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped_choped))
         trampo_bed_shape_image = np.vstack((trampo_bed_shape_image, zeros_top))
     elif rectangle_number == 10:
         zeros_bottom = np.ones((107, 161-53, 3)) * 0.5
         zeros_left = np.ones((428, 53, 3)) * 0.5
         zeros_right = np.ones((428, 214-161, 3)) * 0.5
-        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped))
+        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped_choped))
         trampo_bed_shape_image = np.hstack((zeros_left, trampo_bed_shape_image))
         trampo_bed_shape_image = np.hstack((trampo_bed_shape_image, zeros_right))
     elif rectangle_number == 11:
         zeros_top = np.ones((428-322, 161-53, 3)) * 0.5
         zeros_left = np.ones((428, 53, 3)) * 0.5
         zeros_right = np.ones((428, 214-161, 3)) * 0.5
-        trampo_bed_shape_image = np.vstack((wraped, zeros_top))
+        trampo_bed_shape_image = np.vstack((wraped_choped, zeros_top))
         trampo_bed_shape_image = np.hstack((zeros_left, trampo_bed_shape_image))
         trampo_bed_shape_image = np.hstack((trampo_bed_shape_image, zeros_right))
     elif rectangle_number == 12:
         zeros_bottom = np.ones((107, 161, 3)) * 0.5
         zeros_top = np.ones((428 - 322, 161, 3)) * 0.5
         zeros_right = np.ones((428, 214 - 161, 3)) * 0.5
-        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped))
+        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped_choped))
         trampo_bed_shape_image = np.vstack((trampo_bed_shape_image, zeros_top))
         trampo_bed_shape_image = np.hstack((trampo_bed_shape_image, zeros_right))
     elif rectangle_number == 13:
         zeros_bottom = np.ones((107, 161, 3)) * 0.5
         zeros_top = np.ones((428 - 322, 161, 3)) * 0.5
         zeros_left = np.ones((428, 53, 3)) * 0.5
-        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped))
+        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped_choped))
         trampo_bed_shape_image = np.vstack((trampo_bed_shape_image, zeros_top))
         trampo_bed_shape_image = np.hstack((zeros_left, trampo_bed_shape_image))
     elif rectangle_number == 14:
         zeros_bottom = np.ones((160, 161 - 53, 3)) * 0.5
         zeros_left = np.ones((428, 53, 3)) * 0.5
         zeros_right = np.ones((428, 214 - 161, 3)) * 0.5
-        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped))
+        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped_choped))
         trampo_bed_shape_image = np.hstack((zeros_left, trampo_bed_shape_image))
         trampo_bed_shape_image = np.hstack((trampo_bed_shape_image, zeros_right))
     elif rectangle_number == 15:
         zeros_top = np.ones((428 - 268, 161 - 53, 3)) * 0.5
         zeros_left = np.ones((428, 53, 3)) * 0.5
         zeros_right = np.ones((428, 214 - 161, 3)) * 0.5
-        trampo_bed_shape_image = np.vstack((wraped, zeros_top))
+        trampo_bed_shape_image = np.vstack((wraped_choped, zeros_top))
         trampo_bed_shape_image = np.hstack((zeros_left, trampo_bed_shape_image))
         trampo_bed_shape_image = np.hstack((trampo_bed_shape_image, zeros_right))
     elif rectangle_number == 16:
@@ -349,28 +364,28 @@ def resize_image_for_disposition(wraped, rectangle_number):
         zeros_top = np.ones((428-322, 161-53, 3)) * 0.5
         zeros_left = np.ones((428, 53, 3)) * 0.5
         zeros_right = np.ones((428, 214-161, 3)) * 0.5
-        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped))
+        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped_choped))
         trampo_bed_shape_image = np.vstack((trampo_bed_shape_image, zeros_top))
         trampo_bed_shape_image = np.hstack((zeros_left, trampo_bed_shape_image))
         trampo_bed_shape_image = np.hstack((trampo_bed_shape_image, zeros_right))
     elif rectangle_number == 17:
         zeros_top = np.ones((428-107, 214, 3)) * 0.5
-        trampo_bed_shape_image = np.vstack((wraped, zeros_top))
+        trampo_bed_shape_image = np.vstack((wraped_choped, zeros_top))
     elif rectangle_number == 18:
         zeros_bottom = np.ones((322, 214, 3)) * 0.5
-        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped))
+        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped_choped))
     elif rectangle_number == 19:
         zeros_bottom = np.ones((268, 161 - 53, 3)) * 0.5
         zeros_left = np.ones((428, 53, 3)) * 0.5
         zeros_right = np.ones((428, 214 - 161, 3)) * 0.5
-        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped))
+        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped_choped))
         trampo_bed_shape_image = np.hstack((zeros_left, trampo_bed_shape_image))
         trampo_bed_shape_image = np.hstack((trampo_bed_shape_image, zeros_right))
     elif rectangle_number == 20:
         zeros_top = np.ones((428 - 160, 161 - 53, 3)) * 0.5
         zeros_left = np.ones((428, 53, 3)) * 0.5
         zeros_right = np.ones((428, 214 - 161, 3)) * 0.5
-        trampo_bed_shape_image = np.vstack((wraped, zeros_top))
+        trampo_bed_shape_image = np.vstack((wraped_choped, zeros_top))
         trampo_bed_shape_image = np.hstack((zeros_left, trampo_bed_shape_image))
         trampo_bed_shape_image = np.hstack((trampo_bed_shape_image, zeros_right))
     elif rectangle_number == 21:
@@ -378,7 +393,7 @@ def resize_image_for_disposition(wraped, rectangle_number):
         zeros_top = np.ones((428 - 322, 161-53, 3)) * 0.5
         zeros_left = np.ones((428, 53, 3)) * 0.5
         zeros_right = np.ones((428, 214 - 161, 3)) * 0.5
-        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped))
+        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped_choped))
         trampo_bed_shape_image = np.vstack((trampo_bed_shape_image, zeros_top))
         trampo_bed_shape_image = np.hstack((zeros_left, trampo_bed_shape_image))
         trampo_bed_shape_image = np.hstack((trampo_bed_shape_image, zeros_right))
@@ -387,7 +402,7 @@ def resize_image_for_disposition(wraped, rectangle_number):
         zeros_top = np.ones((428 - 268, 161 - 53, 3)) * 0.5
         zeros_left = np.ones((428, 53, 3)) * 0.5
         zeros_right = np.ones((428, 214 - 161, 3)) * 0.5
-        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped))
+        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped_choped))
         trampo_bed_shape_image = np.vstack((trampo_bed_shape_image, zeros_top))
         trampo_bed_shape_image = np.hstack((zeros_left, trampo_bed_shape_image))
         trampo_bed_shape_image = np.hstack((trampo_bed_shape_image, zeros_right))
@@ -396,110 +411,110 @@ def resize_image_for_disposition(wraped, rectangle_number):
         zeros_top = np.ones((428 - 268, 161 - 53, 3)) * 0.5
         zeros_left = np.ones((428, 53, 3)) * 0.5
         zeros_right = np.ones((428, 214 - 161, 3)) * 0.5
-        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped))
+        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped_choped))
         trampo_bed_shape_image = np.vstack((trampo_bed_shape_image, zeros_top))
         trampo_bed_shape_image = np.hstack((zeros_left, trampo_bed_shape_image))
         trampo_bed_shape_image = np.hstack((trampo_bed_shape_image, zeros_right))
     elif rectangle_number == 24:
         zeros_right = np.ones((428, 214-53, 3)) * 0.5
-        trampo_bed_shape_image = np.hstack((wraped, zeros_right))
+        trampo_bed_shape_image = np.hstack((wraped_choped, zeros_right))
     elif rectangle_number == 25:
         zeros_left = np.ones((428, 161, 3)) * 0.5
-        trampo_bed_shape_image = np.hstack((zeros_left, wraped))
+        trampo_bed_shape_image = np.hstack((zeros_left, wraped_choped))
     elif rectangle_number == 26:
         zeros_top = np.ones((428-322, 53, 3)) * 0.5
         zeros_right = np.ones((428, 214-53, 3)) * 0.5
-        trampo_bed_shape_image = np.vstack((wraped, zeros_top))
+        trampo_bed_shape_image = np.vstack((wraped_choped, zeros_top))
         trampo_bed_shape_image = np.hstack((trampo_bed_shape_image, zeros_right))
     elif rectangle_number == 27:
         zeros_top = np.ones((428-322, 214-161, 3)) * 0.5
         zeros_left = np.ones((428, 161, 3)) * 0.5
-        trampo_bed_shape_image = np.vstack((wraped, zeros_top))
+        trampo_bed_shape_image = np.vstack((wraped_choped, zeros_top))
         trampo_bed_shape_image = np.hstack((zeros_left, trampo_bed_shape_image))
     elif rectangle_number == 28:
         zeros_bottom = np.ones((107, 53, 3)) * 0.5
         zeros_right = np.ones((428, 214 - 53, 3)) * 0.5
-        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped))
+        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped_choped))
         trampo_bed_shape_image = np.hstack((trampo_bed_shape_image, zeros_right))
     elif rectangle_number == 29:
         zeros_bottom = np.ones((107, 53, 3)) * 0.5
         zeros_left = np.ones((428, 161, 3)) * 0.5
-        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped))
+        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped_choped))
         trampo_bed_shape_image = np.hstack((zeros_left, trampo_bed_shape_image))
     elif rectangle_number == 30:
         zeros_top = np.ones((428-107, 161, 3)) * 0.5
         zeros_right = np.ones((428, 214 - 161, 3)) * 0.5
-        trampo_bed_shape_image = np.vstack((wraped, zeros_top))
+        trampo_bed_shape_image = np.vstack((wraped_choped, zeros_top))
         trampo_bed_shape_image = np.hstack((trampo_bed_shape_image, zeros_right))
     elif rectangle_number == 31:
         zeros_top = np.ones((428-107, 214-53, 3)) * 0.5
         zeros_left = np.ones((428, 53, 3)) * 0.5
-        trampo_bed_shape_image = np.vstack((wraped, zeros_top))
+        trampo_bed_shape_image = np.vstack((wraped_choped, zeros_top))
         trampo_bed_shape_image = np.hstack((zeros_left, trampo_bed_shape_image))
     elif rectangle_number == 32:
         zeros_bottom = np.ones((322, 161, 3)) * 0.5
         zeros_right = np.ones((428, 214-161, 3)) * 0.5
-        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped))
+        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped_choped))
         trampo_bed_shape_image = np.hstack((trampo_bed_shape_image, zeros_right))
     elif rectangle_number == 33:
         zeros_bottom = np.ones((322, 161, 3)) * 0.5
         zeros_left = np.ones((428, 53, 3)) * 0.5
-        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped))
+        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped_choped))
         trampo_bed_shape_image = np.hstack((zeros_left, trampo_bed_shape_image))
     elif rectangle_number == 34:
         zeros_top = np.ones((428-53, 161-53, 3)) * 0.5
         zeros_left = np.ones((428, 53, 3)) * 0.5
         zeros_right = np.ones((428, 214-161, 3)) * 0.5
-        trampo_bed_shape_image = np.vstack((wraped, zeros_top))
+        trampo_bed_shape_image = np.vstack((wraped_choped, zeros_top))
         trampo_bed_shape_image = np.hstack((zeros_left, trampo_bed_shape_image))
         trampo_bed_shape_image = np.hstack((trampo_bed_shape_image, zeros_right))
     elif rectangle_number == 35:
         zeros_bottom = np.ones((322, 161-53, 3)) * 0.5
         zeros_left = np.ones((428, 53, 3)) * 0.5
         zeros_right = np.ones((428, 214-161, 3)) * 0.5
-        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped))
+        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped_choped))
         trampo_bed_shape_image = np.hstack((zeros_left, trampo_bed_shape_image))
         trampo_bed_shape_image = np.hstack((trampo_bed_shape_image, zeros_right))
     elif rectangle_number == 36:
         zeros_bottom = np.ones((107, 53, 3)) * 0.5
         zeros_top = np.ones((428-322, 53, 3)) * 0.5
         zeros_right = np.ones((428, 214-53, 3)) * 0.5
-        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped))
+        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped_choped))
         trampo_bed_shape_image = np.vstack((trampo_bed_shape_image, zeros_top))
         trampo_bed_shape_image = np.hstack((trampo_bed_shape_image, zeros_right))
     elif rectangle_number == 37:
         zeros_bottom = np.ones((107, 53, 3)) * 0.5
         zeros_top = np.ones((428-322, 53, 3)) * 0.5
         zeros_left = np.ones((428, 161, 3)) * 0.5
-        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped))
+        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped_choped))
         trampo_bed_shape_image = np.vstack((trampo_bed_shape_image, zeros_top))
         trampo_bed_shape_image = np.hstack((zeros_left, trampo_bed_shape_image))
     elif rectangle_number == 38:
         zeros_top = np.ones((428-107, 53, 3)) * 0.5
         zeros_right = np.ones((428, 214-53, 3)) * 0.5
-        trampo_bed_shape_image = np.vstack((wraped, zeros_top))
+        trampo_bed_shape_image = np.vstack((wraped_choped, zeros_top))
         trampo_bed_shape_image = np.hstack((trampo_bed_shape_image, zeros_right))
     elif rectangle_number == 39:
         zeros_top = np.ones((428-107, 214-161, 3)) * 0.5
         zeros_left = np.ones((428, 161, 3)) * 0.5
-        trampo_bed_shape_image = np.vstack((wraped, zeros_top))
+        trampo_bed_shape_image = np.vstack((wraped_choped, zeros_top))
         trampo_bed_shape_image = np.hstack((zeros_left, trampo_bed_shape_image))
     elif rectangle_number == 40:
         zeros_bottom = np.ones((322, 53, 3)) * 0.5
         zeros_right = np.ones((428, 214-53, 3)) * 0.5
-        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped))
+        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped_choped))
         trampo_bed_shape_image = np.hstack((trampo_bed_shape_image, zeros_right))
     elif rectangle_number == 41:
         zeros_bottom = np.ones((322, 214-161, 3)) * 0.5
         zeros_left = np.ones((428, 161, 3)) * 0.5
-        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped))
+        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped_choped))
         trampo_bed_shape_image = np.hstack((zeros_left, trampo_bed_shape_image))
     elif rectangle_number == 42:
         zeros_bottom = np.ones((268, 161-53, 3)) * 0.5
         zeros_top = np.ones((428-322, 161-53, 3)) * 0.5
         zeros_left = np.ones((428, 53, 3)) * 0.5
         zeros_right = np.ones((428, 214-161, 3)) * 0.5
-        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped))
+        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped_choped))
         trampo_bed_shape_image = np.vstack((trampo_bed_shape_image, zeros_top))
         trampo_bed_shape_image = np.hstack((zeros_left, trampo_bed_shape_image))
         trampo_bed_shape_image = np.hstack((trampo_bed_shape_image, zeros_right))
@@ -508,7 +523,7 @@ def resize_image_for_disposition(wraped, rectangle_number):
         zeros_top = np.ones((428-160, 161-53, 3)) * 0.5
         zeros_left = np.ones((428, 53, 3)) * 0.5
         zeros_right = np.ones((428, 214-161, 3)) * 0.5
-        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped))
+        trampo_bed_shape_image = np.vstack((zeros_bottom, wraped_choped))
         trampo_bed_shape_image = np.vstack((trampo_bed_shape_image, zeros_top))
         trampo_bed_shape_image = np.hstack((zeros_left, trampo_bed_shape_image))
         trampo_bed_shape_image = np.hstack((trampo_bed_shape_image, zeros_right))
@@ -519,18 +534,40 @@ def resize_image_for_disposition(wraped, rectangle_number):
 
     return trampo_bed_shape_image
 
+def empty_trampo_bed_image():
+    global trampo_bed_shape_image
+    trampo_bed_shape_image = np.ones((428, 214, 3), dtype="float32") * 0.5
+    cv2.line(trampo_bed_shape_image, (53, 0), (53, 428), (0, 0, 0), 2)
+    cv2.line(trampo_bed_shape_image, (161, 0), (161, 428), (0, 0, 0), 2)
+    cv2.line(trampo_bed_shape_image, (0, 107), (214, 107), (0, 0, 0), 2)
+    cv2.line(trampo_bed_shape_image, (0, 322), (214, 322), (0, 0, 0), 2)
+    cv2.line(trampo_bed_shape_image, (53, 160), (161, 160), (0, 0, 0), 2)
+    cv2.line(trampo_bed_shape_image, (53, 268), (161, 268), (0, 0, 0), 2)
+    return
+
 def distort_to_rectangle(lines_new_vert_index, lines_new_horz_index):
+    global trampo_bed_shape_image
+
     def four_point_transform(image_to_distort, four_vertices_transform, position_corners_to_map):
-        wraped_width = int(abs(position_corners_to_map[0, 0] - position_corners_to_map[1, 0]))
-        wraped_height = int(abs(position_corners_to_map[0, 1] - position_corners_to_map[3, 1]))
+        # wraped_width = int(abs(position_corners_to_map[0, 0] - position_corners_to_map[1, 0]))
+        # wraped_height = int(abs(position_corners_to_map[0, 1] - position_corners_to_map[3, 1]))
+        # dst = np.array([
+        #     [0, 0],
+        #     [wraped_width, 0],
+        #     [wraped_width, wraped_height],
+        #     [0, wraped_height]], dtype="float32")
         dst = np.array([
-            [position_corners_to_map[2, 0], position_corners_to_map[2, 1]],
-            [position_corners_to_map[3, 0], position_corners_to_map[3, 1]],
             [position_corners_to_map[0, 0], position_corners_to_map[0, 1]],
-            [position_corners_to_map[1, 0], position_corners_to_map[1, 1]]], dtype="float32")
+            [position_corners_to_map[1, 0], position_corners_to_map[1, 1]],
+            [position_corners_to_map[2, 0], position_corners_to_map[2, 1]],
+            [position_corners_to_map[3, 0], position_corners_to_map[3, 1]]], dtype="float32")
         M = cv2.getPerspectiveTransform(four_vertices_transform, dst)
-        wraped = cv2.warpPerspective(image_to_distort, M, (wraped_width, wraped_height))
+        wraped = cv2.warpPerspective(image_to_distort, M, (width_small, height_small), borderMode=cv2.BORDER_CONSTANT, borderValue=(0,0,0)) # wraped_width, wraped_height
         wraped = np.round(wraped)
+
+        # plt.figure()
+        # plt.imshow(wraped)
+        # plt.show()
 
         return wraped
 
@@ -611,23 +648,28 @@ def distort_to_rectangle(lines_new_vert_index, lines_new_horz_index):
             # Perspective transform to get the warped image
             four_vertices_transform = four_vertices_transform.astype(np.float32)
             wraped = four_point_transform(image_to_distort, four_vertices_transform, position_corners_to_map)
-            trampo_bed_shape_image = resize_image_for_disposition(wraped, rectangle_number)
 
-            print("four_vertices_transform : ", four_vertices_transform)
-
-            mask = cv2.inRange(trampo_bed_shape_image, (0, 255, 0), (0, 255, 0))
+            mask = cv2.inRange(wraped, (0, 255, 0), (0, 255, 0))
             if len(np.where(mask != 0)[0]) > 0:
                 fixation_region_y, fixation_region_x = np.where(mask != 0)
                 fixation_pixel = np.round(np.array([np.mean(fixation_region_x), np.mean(fixation_region_y)]))
                 fixation_pixel = fixation_pixel.astype(int)
-                cv2.circle(trampo_bed_shape_image, (fixation_pixel[0], fixation_pixel[1]), 1, color=(0, 255, 255), thickness=-1)
                 csv_eye_tracking[eye_frames[i], 5] = fixation_pixel[0]
                 csv_eye_tracking[eye_frames[i], 6] = fixation_pixel[1]
+                trampo_bed_shape_image = resize_image_for_disposition(wraped, rectangle_number)
+                cv2.circle(trampo_bed_shape_image, (fixation_pixel[0], fixation_pixel[1]), 1, color=(0, 255, 255), thickness=-1)
             else:
                 fixation_pixel = None
 
-        for i in range(len(eye_frames)):
-            cv2.circle(trampo_bed_shape_image, (int(csv_eye_tracking[eye_frames[i], 5]), int(csv_eye_tracking[eye_frames[i], 6])), 1, color=(0, 255, 255), thickness=3)
+            # fixation_pixel = M_transfo @ np.array([csv_eye_tracking[eye_frames[i], 5], csv_eye_tracking[eye_frames[i], 6], 1])
+            # cv2.circle(trampo_bed_shape_image, (int(fixation_pixel[0]), int(fixation_pixel[1])), 1, color=(0, 255, 255), thickness=-1)
+            # csv_eye_tracking[eye_frames[i], 5] = fixation_pixel[0]
+            # csv_eye_tracking[eye_frames[i], 6] = fixation_pixel[1]
+
+            print("four_vertices_transform : ", four_vertices_transform)
+
+        # for i in range(len(eye_frames)):
+        #     cv2.circle(trampo_bed_shape_image, (int(csv_eye_tracking[eye_frames[i], 5]), int(csv_eye_tracking[eye_frames[i], 6])), 1, color=(0, 255, 255), thickness=3)
 
         cv2.line(trampo_bed_shape_image, (53, 0), (53, 428), (0, 0, 0), 2)
         cv2.line(trampo_bed_shape_image, (161, 0), (161, 428), (0, 0, 0), 2)
@@ -635,7 +677,7 @@ def distort_to_rectangle(lines_new_vert_index, lines_new_horz_index):
         cv2.line(trampo_bed_shape_image, (0, 322), (214, 322), (0, 0, 0), 2)
         cv2.line(trampo_bed_shape_image, (53, 160), (161, 160), (0, 0, 0), 2)
         cv2.line(trampo_bed_shape_image, (53, 268), (161, 268), (0, 0, 0), 2)
-        cv2.imshow("Distorted", trampo_bed_shape_image)
+        # cv2.imshow("Distorted", trampo_bed_shape_image)
 
         return
 
@@ -648,67 +690,98 @@ def mouse_click(event, x, y, flags, param):
     return
 
 def put_text():
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    org = (53, 214)
+    fontScale = 0.5
+    color = (255, 0, 0)
+    thickness = 1
     if curent_AOI_label["Wall front"][frame_counter] == 1:
-        cv2.putText(small_image, 'Wall front', (30, 30))
+        cv2.putText(trampo_bed_shape_image, 'Wall front', org, font, fontScale, color, thickness, cv2.LINE_AA)
     elif curent_AOI_label["Wall back"][frame_counter] == 1:
-        cv2.putText(small_image, 'Wall back', (30, 30))
+        cv2.putText(trampo_bed_shape_image, 'Wall back', org, font,fontScale, color, thickness, cv2.LINE_AA)
     elif curent_AOI_label["Ceiling"][frame_counter] == 1:
-        cv2.putText(small_image, 'Ceiling', (30, 30))
+        cv2.putText(trampo_bed_shape_image, 'Ceiling', org, font, fontScale, color, thickness, cv2.LINE_AA)
     elif curent_AOI_label["Not an acrobatics"][frame_counter] == 1:
-        cv2.putText(small_image, "Not an acrobatics", (30, 30))
+        cv2.putText(trampo_bed_shape_image, "Not an acrobatics", org, font, fontScale, color, thickness, cv2.LINE_AA)
+    elif curent_AOI_label["Trampoline"][frame_counter] == 1:
+        cv2.putText(trampo_bed_shape_image, "Trampoline", org, font, fontScale, color, thickness, cv2.LINE_AA)
+
+    cv2.putText(trampo_bed_shape_image, "0", (0+3, 0+13), font, fontScale, (0, 0, 0), thickness, cv2.LINE_AA)
+    cv2.putText(trampo_bed_shape_image, "1", (53+3, 0+13), font, fontScale, (0, 0, 0), thickness, cv2.LINE_AA)
+    cv2.putText(trampo_bed_shape_image, "2", (161-22, 0+13), font, fontScale, (0, 0, 0), thickness, cv2.LINE_AA)
+    cv2.putText(trampo_bed_shape_image, "3", (214-22, 0+13), font, fontScale, (0, 0, 0), thickness, cv2.LINE_AA)
+    cv2.putText(trampo_bed_shape_image, "4", (0+3, 107-3), font, fontScale, (0, 0, 0), thickness, cv2.LINE_AA)
+    cv2.putText(trampo_bed_shape_image, "5", (53+3, 107-3), font, fontScale, (0, 0, 0), thickness, cv2.LINE_AA)
+    cv2.putText(trampo_bed_shape_image, "6", (161-22, 107-3), font, fontScale, (0, 0, 0), thickness, cv2.LINE_AA)
+    cv2.putText(trampo_bed_shape_image, "7", (214-22, 107-3), font, fontScale, (0, 0, 0), thickness, cv2.LINE_AA)
+    cv2.putText(trampo_bed_shape_image, "8", (53+3, 160-3), font, fontScale, (0, 0, 0), thickness, cv2.LINE_AA)
+    cv2.putText(trampo_bed_shape_image, "9", (161-22, 160-3), font, fontScale, (0, 0, 0), thickness, cv2.LINE_AA)
+    cv2.putText(trampo_bed_shape_image, "q", (53+3, 268-3), font, fontScale, (0, 0, 0), thickness, cv2.LINE_AA)
+    cv2.putText(trampo_bed_shape_image, "w", (161-22, 268-3), font, fontScale, (0, 0, 0), thickness, cv2.LINE_AA)
+    cv2.putText(trampo_bed_shape_image, "e", (0+3, 322-3), font, fontScale, (0, 0, 0), thickness, cv2.LINE_AA)
+    cv2.putText(trampo_bed_shape_image, "r", (53+3, 322-3), font, fontScale, (0, 0, 0), thickness, cv2.LINE_AA)
+    cv2.putText(trampo_bed_shape_image, "t", (161-22, 322-3), font, fontScale, (0, 0, 0), thickness, cv2.LINE_AA)
+    cv2.putText(trampo_bed_shape_image, "y", (214-22, 322-3), font, fontScale, (0, 0, 0), thickness, cv2.LINE_AA)
+    cv2.putText(trampo_bed_shape_image, "u", (0+3, 428-3), font, fontScale, (0, 0, 0), thickness, cv2.LINE_AA)
+    cv2.putText(trampo_bed_shape_image, "i", (53+3, 428-3), font, fontScale, (0, 0, 0), thickness, cv2.LINE_AA)
+    cv2.putText(trampo_bed_shape_image, "o", (161-22, 428-3), font, fontScale, (0, 0, 0), thickness, cv2.LINE_AA)
+    cv2.putText(trampo_bed_shape_image, "p", (214-22, 428-3), font, fontScale, (0, 0, 0), thickness, cv2.LINE_AA)
+
+    cv2.imshow("Distorted", trampo_bed_shape_image)
     return
 
 def looking_at_wall_front(*args):
-    if curent_AOI_label["Wall front"][frame_counter] == 0:
-        curent_AOI_label["Wall front"][frame_counter:] = 1
-        curent_AOI_label["Wall back"][frame_counter:] = 0
-        curent_AOI_label["Ceiling"][frame_counter:] = 0
-        curent_AOI_label["Trampoline"][frame_counter:] = 0
-        curent_AOI_label["Not an acrobatics"][frame_counter] = 0
-    else:
-        print("Please click on the right option")
+    curent_AOI_label["Wall front"][frame_counter:] = 1
+    curent_AOI_label["Wall back"][frame_counter:] = 0
+    curent_AOI_label["Ceiling"][frame_counter:] = 0
+    curent_AOI_label["Trampoline"][frame_counter:] = 0
+    curent_AOI_label["Not an acrobatics"][frame_counter:] = 0
+    curent_AOI_label["Trampoline bed"][frame_counter:] = 0
     return
 
 def looking_at_wall_back(*args):
-    if curent_AOI_label["Wall back"][frame_counter] == 0:
-        curent_AOI_label["Wall back"][frame_counter:] = 1
-        curent_AOI_label["Wall front"][frame_counter:] = 0
-        curent_AOI_label["Ceiling"][frame_counter:] = 0
-        curent_AOI_label["Trampoline"][frame_counter:] = 0
-        curent_AOI_label["Not an acrobatics"][frame_counter] = 0
-    else:
-        print("Please click on the right option")
+    curent_AOI_label["Wall back"][frame_counter:] = 1
+    curent_AOI_label["Wall front"][frame_counter:] = 0
+    curent_AOI_label["Ceiling"][frame_counter:] = 0
+    curent_AOI_label["Trampoline"][frame_counter:] = 0
+    curent_AOI_label["Not an acrobatics"][frame_counter:] = 0
+    curent_AOI_label["Trampoline bed"][frame_counter:] = 0
     return
 
 def looking_at_ceiling(*args):
-    if curent_AOI_label["Ceiling"][frame_counter] == 0:
-        curent_AOI_label["Ceiling"][frame_counter:] = 1
-        curent_AOI_label["Wall back"][frame_counter:] = 0
-        curent_AOI_label["Wall front"][frame_counter:] = 0
-        curent_AOI_label["Trampoline"][frame_counter:] = 0
-        curent_AOI_label["Not an acrobatics"][frame_counter] = 0
-    else:
-        print("Please click on the right option")
+    curent_AOI_label["Ceiling"][frame_counter:] = 1
+    curent_AOI_label["Wall back"][frame_counter:] = 0
+    curent_AOI_label["Wall front"][frame_counter:] = 0
+    curent_AOI_label["Trampoline"][frame_counter:] = 0
+    curent_AOI_label["Not an acrobatics"][frame_counter:] = 0
+    curent_AOI_label["Trampoline bed"][frame_counter:] = 0
     return
 
 def looking_at_trampo_bed(*args):
-    if curent_AOI_label["Trampoline"][frame_counter] == 0:
-        curent_AOI_label["Trampoline"][frame_counter:] = 1
-        curent_AOI_label["Wall back"][frame_counter:] = 0
-        curent_AOI_label["Wall front"][frame_counter:] = 0
-        curent_AOI_label["Ceiling"][frame_counter:] = 0
-        curent_AOI_label["Not an acrobatics"][frame_counter] = 0
-    else:
-        print("Please click on the right option")
+    curent_AOI_label["Trampoline bed"][frame_counter:] = 1
+    curent_AOI_label["Wall back"][frame_counter:] = 0
+    curent_AOI_label["Wall front"][frame_counter:] = 0
+    curent_AOI_label["Ceiling"][frame_counter:] = 0
+    curent_AOI_label["Not an acrobatics"][frame_counter:] = 0
+    curent_AOI_label["Trampoline"][frame_counter:] = 0
+    return
+
+def looking_at_trampo(*args):
+    curent_AOI_label["Trampoline"][frame_counter:] = 1
+    curent_AOI_label["Wall back"][frame_counter:] = 0
+    curent_AOI_label["Wall front"][frame_counter:] = 0
+    curent_AOI_label["Ceiling"][frame_counter:] = 0
+    curent_AOI_label["Not an acrobatics"][frame_counter:] = 0
+    curent_AOI_label["Trampoline bed"][frame_counter:] = 0
     return
 
 def looking_at_not_an_acrobatics(*args):
-    if curent_AOI_label["Not an acrobatics"][frame_counter] == 0:
-        curent_AOI_label["Not an acrobatics"][frame_counter] = 1
-        curent_AOI_label["Trampoline"][frame_counter:] = 0
-        curent_AOI_label["Wall back"][frame_counter:] = 0
-        curent_AOI_label["Wall front"][frame_counter:] = 0
-        curent_AOI_label["Ceiling"][frame_counter:] = 0
+    curent_AOI_label["Not an acrobatics"][frame_counter:] = 1
+    curent_AOI_label["Trampoline"][frame_counter:] = 0
+    curent_AOI_label["Wall back"][frame_counter:] = 0
+    curent_AOI_label["Wall front"][frame_counter:] = 0
+    curent_AOI_label["Ceiling"][frame_counter:] = 0
+    curent_AOI_label["Trampoline bed"][frame_counter:] = 0
     return
 
 def point_choice(*args):
@@ -725,7 +798,7 @@ def point_choice(*args):
 
 ############################### code beginning #######################################################################
 global image_clone, small_image, number_of_points_to_label, width_small, height_small, frame_counter, label_keys, points_labels, frames_clone
-global ratio_image, Image_name, borders_points, curent_AOI_label, csv_eye_tracking
+global ratio_image, Image_name, borders_points, curent_AOI_label, csv_eye_tracking, point_label_names
 
 circle_radius = 5
 line_color = (1, 1, 1)
@@ -742,7 +815,7 @@ Trackbar_name = "Frames"
 ratio_image = 1.5
 
 movie_path = "../output/"
-movie_name = "df297219_0_0-43_588"  # "PI world v1 ps1.mp4"
+movie_name = "PI world v1 ps1" # "df297219_0_0-43_588"  #
 movie_file = movie_path + movie_name + "_undistorted_images.pkl"
 
 # frames, num_frames = load_video_frames(movie_file)
@@ -779,7 +852,7 @@ for i in range(len(csv_read)):
 # 5: pos_x_bedFrame -> computed from labeling and distortion
 # 6: pos_y_bedFrame -> computed from labeling and distortion
 
-
+point_label_names = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "q", "w", "e", "r", "t", "y", "u", "i", "o", "p"]
 points_labels = {"0": np.zeros((2, len(frames))),
                 "1": np.zeros((2, len(frames))),
                 "2": np.zeros((2, len(frames))),
@@ -802,6 +875,7 @@ points_labels = {"0": np.zeros((2, len(frames))),
                 "19": np.zeros((2, len(frames)))}
 
 curent_AOI_label = {"Trampoline": np.zeros((len(frames), )),
+                "Trampoline bed": np.zeros((len(frames), )),
                 "Wall front": np.zeros((len(frames), )),
                 "Wall back": np.zeros((len(frames), )),
                 "Ceiling": np.zeros((len(frames), )),
@@ -959,23 +1033,23 @@ lines_definitions[[12, 14, 15], 13] = 4
 lines_definitions[14, [12, 13, 15]] = 4
 lines_definitions[[12, 13, 15], 14] = 4
 lines_definitions[15, [12, 13, 14]] = 4
-lines_definitions[12:15, 15] = 4
-lines_definitions[16, 17:20] = 5
-lines_definitions[17:20, 16] = 5
+lines_definitions[[12, 13, 14], 15] = 4
+lines_definitions[16, [17, 18, 19]] = 5
+lines_definitions[[17, 18, 19], 16] = 5
 lines_definitions[17, [16, 18, 19]] = 5
 lines_definitions[[16, 18, 19], 17] = 5
 lines_definitions[18, [16, 17, 19]] = 5
 lines_definitions[[16, 17, 19], 18] = 5
-lines_definitions[19, 16:19] = 5
-lines_definitions[16:19, 19] = 5
-lines_definitions[0, [4, 13, 16]] = 6
-lines_definitions[[4, 13, 16], 0] = 6
-lines_definitions[4, [0, 13, 16]] = 6
-lines_definitions[[0, 13, 16], 4] = 6
-lines_definitions[13, [0, 4, 16]] = 6
-lines_definitions[[0, 4, 16], 13] = 6
-lines_definitions[16, [0, 4, 13]] = 6
-lines_definitions[[0, 4, 13], 16] = 6
+lines_definitions[19, [16, 17, 18]] = 5
+lines_definitions[[16, 17, 18], 19] = 5
+lines_definitions[0, [4, 12, 16]] = 6
+lines_definitions[[4, 12, 16], 0] = 6
+lines_definitions[4, [0, 12, 16]] = 6
+lines_definitions[[0, 12, 16], 4] = 6
+lines_definitions[12, [0, 4, 16]] = 6
+lines_definitions[[0, 4, 16], 12] = 6
+lines_definitions[16, [0, 4, 12]] = 6
+lines_definitions[[0, 4, 12], 16] = 6
 lines_definitions[1, [5, 8, 10, 13, 17]] = 7
 lines_definitions[[5, 8, 10, 13, 17], 1] = 7
 lines_definitions[5, [1, 8, 10, 13, 17]] = 7
@@ -1336,32 +1410,32 @@ cv2.createTrackbar(Trackbar_name, Image_name, 0, num_frames, nothing)
 frame_counter = 0
 # cv2.setTrackbarPos(Trackbar_name, Image_name, frame_counter)
 cv2.createButton("0", point_choice, 0, cv2.QT_PUSH_BUTTON, 0)
-cv2.createButton("1", point_choice, 1, cv2.QT_PUSH_BUTTON, 0)
-cv2.createButton("2", point_choice, 2, cv2.QT_PUSH_BUTTON, 0)
-cv2.createButton("3", point_choice, 3, cv2.QT_PUSH_BUTTON, 0)
-cv2.createButton("4", point_choice, 4, cv2.QT_PUSH_BUTTON, 0)
-cv2.createButton("5", point_choice, 5, cv2.QT_PUSH_BUTTON, 0)
-cv2.createButton("6", point_choice, 6, cv2.QT_PUSH_BUTTON, 0)
-cv2.createButton("7", point_choice, 7, cv2.QT_PUSH_BUTTON, 0)
-cv2.createButton("8", point_choice, 8, cv2.QT_PUSH_BUTTON, 0)
-cv2.createButton("9", point_choice, 9, cv2.QT_PUSH_BUTTON, 0)
-cv2.createButton("10", point_choice, 10, cv2.QT_PUSH_BUTTON, 0)
-cv2.createButton("11", point_choice, 11, cv2.QT_PUSH_BUTTON, 0)
-cv2.createButton("12", point_choice, 12, cv2.QT_PUSH_BUTTON, 0)
-cv2.createButton("13", point_choice, 13, cv2.QT_PUSH_BUTTON, 0)
-cv2.createButton("14", point_choice, 14, cv2.QT_PUSH_BUTTON, 0)
-cv2.createButton("15", point_choice, 15, cv2.QT_PUSH_BUTTON, 0)
-cv2.createButton("16", point_choice, 16, cv2.QT_PUSH_BUTTON, 0)
-cv2.createButton("17", point_choice, 17, cv2.QT_PUSH_BUTTON, 0)
-cv2.createButton("18", point_choice, 18, cv2.QT_PUSH_BUTTON, 0)
-cv2.createButton("19", point_choice, 19, cv2.QT_PUSH_BUTTON, 0)
+cv2.createButton("1", point_choice, 1, cv2.QT_PUSH_BUTTON, 1)
+cv2.createButton("2", point_choice, 2, cv2.QT_PUSH_BUTTON, 2)
+cv2.createButton("3", point_choice, 3, cv2.QT_PUSH_BUTTON, 3)
+cv2.createButton("4", point_choice, 4, cv2.QT_PUSH_BUTTON, 4)
+cv2.createButton("5", point_choice, 5, cv2.QT_PUSH_BUTTON, 5)
+cv2.createButton("6", point_choice, 6, cv2.QT_PUSH_BUTTON, 6)
+cv2.createButton("7", point_choice, 7, cv2.QT_PUSH_BUTTON, 7)
+cv2.createButton("8", point_choice, 8, cv2.QT_PUSH_BUTTON, 8)
+cv2.createButton("9", point_choice, 9, cv2.QT_PUSH_BUTTON, 9)
+cv2.createButton("q", point_choice, 10, cv2.QT_PUSH_BUTTON, 10)
+cv2.createButton("w", point_choice, 11, cv2.QT_PUSH_BUTTON, 11)
+cv2.createButton("e", point_choice, 12, cv2.QT_PUSH_BUTTON, 12)
+cv2.createButton("r", point_choice, 13, cv2.QT_PUSH_BUTTON, 13)
+cv2.createButton("t", point_choice, 14, cv2.QT_PUSH_BUTTON, 14)
+cv2.createButton("y", point_choice, 15, cv2.QT_PUSH_BUTTON, 15)
+cv2.createButton("u", point_choice, 16, cv2.QT_PUSH_BUTTON, 16)
+cv2.createButton("i", point_choice, 17, cv2.QT_PUSH_BUTTON, 17)
+cv2.createButton("o", point_choice, 18, cv2.QT_PUSH_BUTTON, 18)
+cv2.createButton("p", point_choice, 19, cv2.QT_PUSH_BUTTON, 19)
 cv2.createTrackbar("Rien", "", 0, 1, nothing)
-cv2.createButton("Trampoline", looking_at_trampo_bed, 0, cv2.QT_PUSH_BUTTON, 0)
+cv2.createButton("Trampoline", looking_at_trampo, 0, cv2.QT_PUSH_BUTTON, 0)
 cv2.createButton("Wall front", looking_at_wall_front, 0, cv2.QT_PUSH_BUTTON, 0)
 cv2.createButton("Wall back", looking_at_wall_back, 0, cv2.QT_PUSH_BUTTON, 0)
 cv2.createButton("Ceiling", looking_at_ceiling, 0, cv2.QT_PUSH_BUTTON, 0)
 cv2.createButton("Not an acrobatics", looking_at_not_an_acrobatics, 0, cv2.QT_PUSH_BUTTON, 0)
-cv2.createButton("OK", image_treatment, 0, cv2.QT_PUSH_BUTTON, 0)
+# cv2.createButton("OK", image_treatment, 0, cv2.QT_PUSH_BUTTON, 0)
 cv2.setMouseCallback(Image_name, mouse_click)
 
 playVideo = True
@@ -1373,6 +1447,51 @@ cv2.imshow(Image_name, small_image)
 while playVideo == True:
 
     key = cv2.waitKey(0) & 0xFF
+
+    if key == ord('0'):
+        point_choice(0, 0)
+    elif key == ord('1'):
+        point_choice(1, 1)
+    elif key == ord('2'):
+        point_choice(2, 2)
+    elif key == ord('3'):
+        point_choice(3, 3)
+    elif key == ord('4'):
+        point_choice(4, 4)
+    elif key == ord('5'):
+        point_choice(5, 5)
+    elif key == ord('6'):
+        point_choice(6, 6)
+    elif key == ord('7'):
+        point_choice(7, 7)
+    elif key == ord('8'):
+        point_choice(8, 8)
+    elif key == ord('9'):
+        point_choice(9, 9)
+    elif key == ord('q'):
+        point_choice(10, 10)
+    elif key == ord('w'):
+        point_choice(11, 11)
+    elif key == ord('e'):
+        point_choice(12, 12)
+    elif key == ord('r'):
+        point_choice(13, 13)
+    elif key == ord('t'):
+        point_choice(14, 14)
+    elif key == ord('y'):
+        point_choice(15, 15)
+    elif key == ord('u'):
+        point_choice(16, 16)
+    elif key == ord('i'):
+        point_choice(17, 17)
+    elif key == ord('o'):
+        point_choice(18, 18)
+    elif key == ord('p'):
+        point_choice(19, 19)
+
+    if frame_counter % 30: # s'il ya un probleme, au moins on n'a pas tout perdu
+        with open(f'../output/{movie_name[:-4]}_labeling_points.pkl', 'wb') as handle:
+            pickle.dump([points_labels, active_points, curent_AOI_label, csv_eye_tracking], handle)
 
     frame_counter = cv2.getTrackbarPos(Trackbar_name, Image_name)
     image_clone = frames_clone[frame_counter]
@@ -1389,6 +1508,8 @@ while playVideo == True:
         draw_points_and_lines()
 
     elif key == ord('.'):  # if `>` then advance
+        image_treatment()
+        put_text()
         if frame_counter < num_frames-1:
             frame_counter += 1
         cv2.setTrackbarPos(Trackbar_name, Image_name, frame_counter)
@@ -1397,7 +1518,6 @@ while playVideo == True:
         small_image_gray = cv2.cvtColor(small_image, cv2.COLOR_BGR2GRAY)
         cv2.imshow(Image_name, small_image_gray)
         draw_points_and_lines()
-
 
     elif key == ord('x'):  # if `x` then quit
         playVideo = False
