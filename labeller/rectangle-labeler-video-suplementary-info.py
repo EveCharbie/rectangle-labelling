@@ -30,14 +30,17 @@ def load_video_frames(video_file, num_frames=None):
 
 def draw_points_and_lines():
     global points_labels, circle_colors, circle_radius, frame_counter, frames_clone, active_points, rectangle_color, number_of_points_to_label
-
-    small_image_clone_eye_before = frames_clone[frame_counter]
+    small_image_clone_eye_before = np.zeros(np.shape(frames_clone[frame_counter]), dtype=np.uint8)
+    small_image_clone_eye_before[:] = frames_clone[frame_counter][:]
     eye_frames = np.where(csv_eye_tracking[:, 4] == frame_counter)[0]
     for i in range(len(eye_frames)):
-        small_image_clone_eye_before[int(csv_eye_tracking[eye_frames[i], 2] - 3):
-                                     int(csv_eye_tracking[eye_frames[i], 2] + 4), \
-                                    int(csv_eye_tracking[eye_frames[i], 1] - 3):
-                                    int(csv_eye_tracking[eye_frames[i], 1] + 4), :] = np.array([0, 255, 0])
+        # small_image_clone_eye_before[int(csv_eye_tracking[eye_frames[i], 2] - 3):
+        #                              int(csv_eye_tracking[eye_frames[i], 2] + 4), \
+        #                             int(csv_eye_tracking[eye_frames[i], 1] - 3):
+        #                             int(csv_eye_tracking[eye_frames[i], 1] + 4), :] = np.array([0, 255, 0])
+        for iy in range(int(csv_eye_tracking[eye_frames[i], 2] - 3), int(csv_eye_tracking[eye_frames[i], 2] +4)):
+            for ix in range(int(csv_eye_tracking[eye_frames[i], 1] - 3), int(csv_eye_tracking[eye_frames[i], 1] + 4)):
+                cv2.circle(small_image_clone_eye_before, (ix, iy), 1, color=(0, 255, 0), thickness=-1)
     small_image_clone_eye_before = cv2.resize(small_image_clone_eye_before, (int(round(width / ratio_image)), int(round(height / ratio_image))))
 
     for i in range(number_of_points_to_label):
@@ -67,6 +70,9 @@ def image_treatment(*args):
     this_frame_points_labels = np.zeros((2, number_of_points_to_label))
     for i, key in enumerate(label_keys):
         this_frame_points_labels[:, i] = points_labels[key][:, frame_counter]
+
+    if len(this_frame_points_labels) < 4:
+        empty_trampo_bed_image()
 
     lines_last_frame, borders_last_frame, lines_points_index, borders_points_index, unique_lines_index, unique_borders_index = find_lines_to_search_for(this_frame_points_labels)
 
@@ -279,7 +285,8 @@ def resize_image_for_disposition(wraped, rectangle_number):
     # plt.show()
 
     if rectangle_number == 0:
-        trampo_bed_shape_image = wraped_choped.copy()
+        trampo_bed_shape_image = np.zeros(np.shape(wraped_choped), dtype=np.uint8)
+        trampo_bed_shape_image[:] = wraped_choped[:]
     elif rectangle_number == 1:
         zeros_top = np.ones((428-322, 214, 3)) * 0.5
         trampo_bed_shape_image = np.vstack((wraped_choped, zeros_top))
@@ -549,22 +556,10 @@ def distort_to_rectangle(lines_new_vert_index, lines_new_horz_index):
     global trampo_bed_shape_image
 
     def four_point_transform(image_to_distort, four_vertices_transform, position_corners_to_map):
-        # wraped_width = int(abs(position_corners_to_map[0, 0] - position_corners_to_map[1, 0]))
-        # wraped_height = int(abs(position_corners_to_map[0, 1] - position_corners_to_map[3, 1]))
-        # dst = np.array([
-        #     [0, 0],
-        #     [wraped_width, 0],
-        #     [wraped_width, wraped_height],
-        #     [0, wraped_height]], dtype="float32")
         dst =  position_corners_to_map.astype("float32")
         M = cv2.getPerspectiveTransform(four_vertices_transform, dst)
         wraped = cv2.warpPerspective(image_to_distort, M, (width_small, height_small), borderMode=cv2.BORDER_CONSTANT, borderValue=(0,0,0)) # wraped_width, wraped_height
         wraped = np.round(wraped)
-
-        # plt.figure()
-        # plt.imshow(wraped)
-        # plt.show()
-
         return wraped
 
     def which_rectangle_is_visible(lines_new_vert_index, lines_new_horz_index):
@@ -585,7 +580,6 @@ def distort_to_rectangle(lines_new_vert_index, lines_new_horz_index):
 
         return position_corners_to_map, four_vertices_index, rectangle_number
 
-    # Finding the four corner points and ordering them
     position_corners_to_map, four_vertices_index, rectangle_number = which_rectangle_is_visible(lines_new_vert_index, lines_new_horz_index)
 
     if position_corners_to_map is None:
@@ -602,14 +596,16 @@ def distort_to_rectangle(lines_new_vert_index, lines_new_horz_index):
 
         eye_frames = np.where(csv_eye_tracking[:, 4] == frame_counter)[0]
         for i in range(len(eye_frames)):
-            image_clone_eye = image_clone.copy()
-            image_clone_eye[int(csv_eye_tracking[eye_frames[i], 5] - 3) : # 5, 6 ou 6, 5
-                            int(csv_eye_tracking[eye_frames[i], 5] + 4),
-                            int(csv_eye_tracking[eye_frames[i], 6] - 3) :
-                            int(csv_eye_tracking[eye_frames[i], 6] + 4), :] = np.array([0, 255, 0])
+            image_clone_eye = np.zeros(np.shape(frames_clone[frame_counter]), dtype=np.uint8)
+            image_clone_eye[:] = frames_clone[frame_counter][:]
+
+            for iy in range(int(csv_eye_tracking[eye_frames[i], 2] - 3), int(csv_eye_tracking[eye_frames[i], 2] +4)):
+                for ix in range(int(csv_eye_tracking[eye_frames[i], 1] - 3), int(csv_eye_tracking[eye_frames[i], 1] + 4)):
+                    cv2.circle(image_clone_eye, (ix, iy), 1, color=(0, 255, 0), thickness=-1)
             small_image_clone_eye = cv2.resize(image_clone_eye, (int(round(width / ratio_image)), int(round(height / ratio_image))))
 
-            image_to_distort = small_image_clone_eye.copy()
+            image_to_distort = np.zeros(np.shape(small_image_clone_eye), dtype=np.uint8)
+            image_to_distort[:] = small_image_clone_eye[:]
 
             four_vertices_transform = np.zeros((4, 2))
             four_vertices_transform[:, :] = four_vertices[:, :]
@@ -641,31 +637,23 @@ def distort_to_rectangle(lines_new_vert_index, lines_new_horz_index):
                 image_to_distort = np.vstack((image_to_distort, zeros_bottom))
                 size_width += missing_pixels
 
-            # Perspective transform to get the warped image
             four_vertices_transform = four_vertices_transform.astype(np.float32)
             wraped = four_point_transform(image_to_distort, four_vertices_transform, position_corners_to_map)
-
             mask = cv2.inRange(wraped, (0, 255, 0), (0, 255, 0))
             if len(np.where(mask != 0)[0]) > 0:
                 fixation_region_y, fixation_region_x = np.where(mask != 0)
                 fixation_pixel = np.round(np.array([np.mean(fixation_region_x), np.mean(fixation_region_y)]))
-                fixation_pixel = fixation_pixel.astype(int)
                 csv_eye_tracking[eye_frames[i], 5] = fixation_pixel[0]
                 csv_eye_tracking[eye_frames[i], 6] = fixation_pixel[1]
-                trampo_bed_shape_image = resize_image_for_disposition(wraped, rectangle_number)
-                cv2.circle(trampo_bed_shape_image, (fixation_pixel[0], fixation_pixel[1]), 1, color=(0, 255, 255), thickness=-1)
             else:
                 fixation_pixel = None
+            trampo_bed_shape_image = resize_image_for_disposition(wraped, rectangle_number)
 
-            # fixation_pixel = M_transfo @ np.array([csv_eye_tracking[eye_frames[i], 5], csv_eye_tracking[eye_frames[i], 6], 1])
-            # cv2.circle(trampo_bed_shape_image, (int(fixation_pixel[0]), int(fixation_pixel[1])), 1, color=(0, 255, 255), thickness=-1)
-            # csv_eye_tracking[eye_frames[i], 5] = fixation_pixel[0]
-            # csv_eye_tracking[eye_frames[i], 6] = fixation_pixel[1]
 
             print("four_vertices_transform : ", four_vertices_transform)
 
-        # for i in range(len(eye_frames)):
-        #     cv2.circle(trampo_bed_shape_image, (int(csv_eye_tracking[eye_frames[i], 5]), int(csv_eye_tracking[eye_frames[i], 6])), 1, color=(0, 255, 255), thickness=3)
+        for i in range(len(eye_frames)):
+            cv2.circle(trampo_bed_shape_image, (int(csv_eye_tracking[eye_frames[i], 5]), int(csv_eye_tracking[eye_frames[i], 6])), 3, color=(0, 255, 255), thickness=-1)
 
         cv2.line(trampo_bed_shape_image, (53, 0), (53, 428), (180, 180, 180), 2)
         cv2.line(trampo_bed_shape_image, (161, 0), (161, 428), (180, 180, 180), 2)
@@ -673,8 +661,6 @@ def distort_to_rectangle(lines_new_vert_index, lines_new_horz_index):
         cv2.line(trampo_bed_shape_image, (0, 322), (214, 322), (180, 180, 180), 2)
         cv2.line(trampo_bed_shape_image, (53, 160), (161, 160), (180, 180, 180), 2)
         cv2.line(trampo_bed_shape_image, (53, 268), (161, 268), (180, 180, 180), 2)
-        # cv2.imshow("Distorted", trampo_bed_shape_image)
-
         return
 
 def mouse_click(event, x, y, flags, param):
@@ -1401,6 +1387,14 @@ rectangle_points_position_definition[43, :, :] = np.array([[53, 107],
 def nothing(x):
     return
 
+
+movie_name = "df297219_0_0-43_588"  #"PI world v1 ps1" #
+gaze_position_labels = movie_path + movie_name + "_labeling_points.pkl"
+out_path = '/home/user/Documents/Programmation/rectangle-labelling/output/Results'
+file = open(gaze_position_labels, "rb")
+points_labels, active_points, curent_AOI_label, csv_eye_tracking = pickle.load(file)
+
+
 cv2.namedWindow(Image_name)
 cv2.createTrackbar(Trackbar_name, Image_name, 0, num_frames, nothing)
 frame_counter = 0
@@ -1485,19 +1479,22 @@ while playVideo == True:
     elif key == ord('p'):
         point_choice(19, 19)
 
-    if frame_counter % 30: # s'il ya un probleme, au moins on n'a pas tout perdu
+    if frame_counter % 15: # s'il ya un probleme, au moins on n'a pas tout perdu
         with open(f'../output/{movie_name[:-4]}_labeling_points.pkl', 'wb') as handle:
             pickle.dump([points_labels, active_points, curent_AOI_label, csv_eye_tracking], handle)
 
     frame_counter = cv2.getTrackbarPos(Trackbar_name, Image_name)
-    image_clone = frames_clone[frame_counter]
+    frames_clone = frames.copy()
+    image_clone = np.zeros(np.shape(frames_clone[frame_counter]), dtype=np.uint8)
+    image_clone[:] = frames_clone[frame_counter][:]
     small_image = cv2.resize(image_clone, (int(round(width / ratio_image)), int(round(height / ratio_image))))
 
     if key == ord(','):  # if `<` then go back
         if frame_counter != 0:
             frame_counter -= 1
         cv2.setTrackbarPos(Trackbar_name, Image_name, frame_counter)
-        image_clone = frames_clone[frame_counter]
+        image_clone = np.zeros(np.shape(frames_clone[frame_counter]), dtype=np.uint8)
+        image_clone[:] = frames_clone[frame_counter][:]
         small_image = cv2.resize(image_clone, (int(round(width / ratio_image)), int(round(height / ratio_image))))
         small_image_gray = cv2.cvtColor(small_image, cv2.COLOR_BGR2GRAY)
         cv2.imshow(Image_name, small_image_gray)
@@ -1509,7 +1506,8 @@ while playVideo == True:
         if frame_counter < num_frames-1:
             frame_counter += 1
         cv2.setTrackbarPos(Trackbar_name, Image_name, frame_counter)
-        image_clone = frames_clone[frame_counter]
+        image_clone = np.zeros(np.shape(frames_clone[frame_counter]), dtype=np.uint8)
+        image_clone[:] = frames_clone[frame_counter][:]
         small_image = cv2.resize(image_clone, (int(round(width / ratio_image)), int(round(height / ratio_image))))
         small_image_gray = cv2.cvtColor(small_image, cv2.COLOR_BGR2GRAY)
         cv2.imshow(Image_name, small_image_gray)
@@ -1520,6 +1518,6 @@ while playVideo == True:
 
 cv2.destroyAllWindows()
 
-with open(f'../output/{movie_name[:-4]}_labeling_points.pkl', 'wb') as handle:
+with open(f'../output/{movie_name}_labeling_points.pkl', 'wb') as handle:
     pickle.dump([points_labels, active_points, curent_AOI_label, csv_eye_tracking], handle)
 
