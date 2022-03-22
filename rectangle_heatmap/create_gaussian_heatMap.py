@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from scipy.stats import multivariate_normal
 import cv2
 import pickle
+import os
 
 
 def points_to_gaussian_heatmap(centers, height, width, scale):
@@ -50,11 +51,14 @@ plt.plot(np.array([107, 107]), np.array([214-25, 214+25]), '-k', linewidth=1)
 
 movie_path = "../output/"
 #########################################################################################
-movie_name = "df297219_0_0-43_588"  #"PI world v1 ps1" #
+# "df297219_0_0-43_588" GuSe
+# "d7b37ec2_0_0-37_269" AnBe
+movie_name = "d7b37ec2_0_0-37_269"
 gaze_position_labels = movie_path + movie_name + "_labeling_points.pkl"
 out_path = '/home/user/Documents/Programmation/rectangle-labelling/output/Results'
-subject_name = 'GuSe'
+subject_name = 'AnBe' # 'GuSe'
 move_names = ['4-o'] # , '8--1o', '8--o', '8--1o']
+move_orientation = [-1] # AnBe # [+1] # GuSe
 
 file = open(gaze_position_labels, "rb")
 points_labels, active_points, curent_AOI_label, csv_eye_tracking = pickle.load(file)
@@ -88,12 +92,21 @@ for i in range(len(move_names)):
             index_gaze = np.where(csv_eye_tracking[:, 4] == j)[0]
             for k in index_gaze:
                 if csv_eye_tracking[k, 5] != 0 and csv_eye_tracking[k, 6] != 0:
-                    centers_gaze_bed_i.append((csv_eye_tracking[k, 5], csv_eye_tracking[k, 6]))
+                    if move_orientation[i] < 0:
+                        centers_gaze_bed_i.append((image_width - csv_eye_tracking[k, 5], image_height - csv_eye_tracking[k, 6]))
+                    else:
+                        centers_gaze_bed_i.append((csv_eye_tracking[k, 5], csv_eye_tracking[k, 6]))
             number_of_trampoline_bed += 1
         elif curent_AOI_label["Wall front"][j] == 1:
-            number_of_wall_front += 1
+            if move_orientation[i] < 0:
+                number_of_wall_back += 1
+            else:
+                number_of_wall_front += 1
         elif curent_AOI_label["Wall back"][j] == 1:
-            number_of_wall_back += 1
+            if move_orientation[i] < 0:
+                number_of_wall_front += 1
+            else:
+                number_of_wall_back += 1
         elif curent_AOI_label["Ceiling"][j] == 1:
             number_of_ceiling += 1
         elif curent_AOI_label["Trampoline"][j] == 1:
@@ -104,15 +117,20 @@ for i in range(len(move_names)):
     plt.imshow(img)
     plt.show()
 
-    move_summary[i] = {"movement name": move_names[i],
-                       "subject name": subject_name,
-                       "movie name": movie_name,
+    move_summary[i] = {"movement_name": move_names[i],
+                       "subject_name": subject_name,
+                       "movie_name": movie_name,
                        "centers": centers_gaze_bed_i,
-                       "heat map": img,
-                       "trampoline bed proportions": number_of_trampoline_bed/gaze_total_move,
-                       "wall front proportions": number_of_wall_front/gaze_total_move,
-                       "wall back proportions": number_of_wall_back/gaze_total_move,
-                       "ceiling proportions": number_of_ceiling/gaze_total_move}
+                       "heat_map": img,
+                       "trampoline_bed_proportions": number_of_trampoline_bed/gaze_total_move,
+                       "wall_front_proportions": number_of_wall_front/gaze_total_move,
+                       "wall_back_proportions": number_of_wall_back/gaze_total_move,
+                       "ceiling_proportions": number_of_ceiling/gaze_total_move}
+
+    if not os.path.exists(f'{out_path}/{subject_name}'):
+        os.makedirs(f'{out_path}/{subject_name}')
+    if not os.path.exists(f'{out_path}/{subject_name}/{move_names[i]}'):
+        os.makedirs(f'{out_path}/{subject_name}/{move_names[i]}')
 
     with open(f'{out_path}/{subject_name}/{move_names[i]}/{movie_name}_heat_map_{i}.pkl', 'wb') as handle:
         pickle.dump(move_summary[i], handle)

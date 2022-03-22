@@ -797,7 +797,7 @@ Trackbar_name = "Frames"
 ratio_image = 1.5
 
 movie_path = "../output/"
-movie_name = "df297219_0_0-43_588"  #"PI world v1 ps1" #
+movie_name = "d7b37ec2_0_0-37_269"  # "df297219_0_0-43_588"  #"PI world v1 ps1" #
 movie_file = movie_path + movie_name + "_undistorted_images.pkl"
 
 # frames, num_frames = load_video_frames(movie_file)
@@ -808,8 +808,9 @@ frames_clone = frames.copy()
 
 
 ## Load eye-tracking data
-filename = '/home/user/Documents/Eye-tracking/Eye_tracking_videos_Antonino/CloudExport/2021-08-18_13-34-08-24bb26ee/gaze.csv'
-filename_timestamps = '/home/user/Documents/Eye-tracking/Eye_tracking_videos_Antonino/CloudExport/2021-08-18_13-34-08-24bb26ee/world_timestamps.csv'
+eye_tracking_data_path = '/home/user/Documents/Eye-tracking/Eye_tracking_videos_Antonino/CloudExport/2021-10-23_13-30-50-c4b788d7/'
+filename = eye_tracking_data_path  + 'gaze.csv'
+filename_timestamps = eye_tracking_data_path + 'world_timestamps.csv'
 
 csv_read = np.char.split(pd.read_csv(filename, sep='\t').values.astype('str'), sep=',')
 timestamps_read = np.char.split(pd.read_csv(filename_timestamps, sep='\t').values.astype('str'), sep=',')
@@ -1378,21 +1379,15 @@ rectangle_points_position_definition[43, :, :] = np.array([[53, 107],
                                                   [161, 160],
                                                   [53, 160]])
 
-# plt.figure()
-# for i in range(np.shape(rectangle_points_definitions)[0]):
-#     plt.plot(np.hstack((rectangle_points_position_definition[i, :, 0], rectangle_points_position_definition[i, 0, 0])), np.hstack((rectangle_points_position_definition[i, :, 1], rectangle_points_position_definition[i, 0, 1])))
-# plt.show()
-
-
 def nothing(x):
     return
 
 
-movie_name = "df297219_0_0-43_588"  #"PI world v1 ps1" #
-gaze_position_labels = movie_path + movie_name + "_labeling_points.pkl"
-out_path = '/home/user/Documents/Programmation/rectangle-labelling/output/Results'
-file = open(gaze_position_labels, "rb")
-points_labels, active_points, curent_AOI_label, csv_eye_tracking = pickle.load(file)
+# movie_name = "df297219_0_0-43_588"  #"PI world v1 ps1" #
+# gaze_position_labels = movie_path + movie_name + "_labeling_points.pkl"
+# out_path = '/home/user/Documents/Programmation/rectangle-labelling/output/Results'
+# file = open(gaze_position_labels, "rb")
+# points_labels, active_points, curent_AOI_label, csv_eye_tracking = pickle.load(file)
 
 
 cv2.namedWindow(Image_name)
