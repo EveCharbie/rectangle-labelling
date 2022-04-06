@@ -7,6 +7,7 @@ import seaborn as sns
 import scipy
 import matplotlib.pyplot as plt
 import pandas as pd
+import os.path
 
 
 def load_video_frames(video_file, num_frames=None):
@@ -69,22 +70,23 @@ def image_treatment(*args):
 
     this_frame_points_labels = np.zeros((2, number_of_points_to_label))
     for i, key in enumerate(label_keys):
-        this_frame_points_labels[:, i] = points_labels[key][:, frame_counter]
+        if active_points[frame_counter, i] == True:
+            this_frame_points_labels[:, i] = points_labels[key][:, frame_counter]
 
-    if len(this_frame_points_labels) < 4:
+    if len(np.nonzero(this_frame_points_labels[0, :])[0]) < 4:
         empty_trampo_bed_image()
-
-    lines_last_frame, borders_last_frame, lines_points_index, borders_points_index, unique_lines_index, unique_borders_index = find_lines_to_search_for(this_frame_points_labels)
-
-    if len(unique_lines_index) > 0 or len(unique_borders_index) > 0:
-        lines_new_vert, lines_new_horz, lines_new_vert_index, lines_new_horz_index = discriminate_lines_vert_vs_horz(lines_last_frame, borders_last_frame, lines_points_index, borders_points_index, unique_lines_index, unique_borders_index)
-        points = find_points_next_frame(lines_new_vert, lines_new_horz, lines_new_vert_index, lines_new_horz_index)
-        if np.asarray(points).sum() == 0:
-            empty_trampo_bed_image()
-        else:
-            distort_to_rectangle(lines_new_vert_index, lines_new_horz_index)
     else:
-        empty_trampo_bed_image()
+        lines_last_frame, borders_last_frame, lines_points_index, borders_points_index, unique_lines_index, unique_borders_index = find_lines_to_search_for(this_frame_points_labels)
+
+        if len(unique_lines_index) > 0 or len(unique_borders_index) > 0:
+            lines_new_vert, lines_new_horz, lines_new_vert_index, lines_new_horz_index = discriminate_lines_vert_vs_horz(lines_last_frame, borders_last_frame, lines_points_index, borders_points_index, unique_lines_index, unique_borders_index)
+            points = find_points_next_frame(lines_new_vert, lines_new_horz, lines_new_vert_index, lines_new_horz_index)
+            if np.asarray(points).sum() == 0:
+                empty_trampo_bed_image()
+            else:
+                distort_to_rectangle(lines_new_vert_index, lines_new_horz_index)
+        else:
+            empty_trampo_bed_image()
 
     return
 
@@ -300,12 +302,12 @@ def resize_image_for_disposition(wraped, rectangle_number):
         zeros_right = np.ones((428, 214-161, 3)) * 0.5
         trampo_bed_shape_image = np.hstack((wraped_choped, zeros_right))
     elif rectangle_number == 5:
-        zeros_top = np.ones((428-233, 161, 3)) * 0.5
+        zeros_top = np.ones((428-322, 161, 3)) * 0.5
         zeros_right = np.ones((428, 214-161, 3)) * 0.5
         trampo_bed_shape_image = np.vstack((wraped_choped, zeros_top))
         trampo_bed_shape_image = np.hstack((trampo_bed_shape_image, zeros_right))
     elif rectangle_number == 6:
-        zeros_top = np.ones((428-233, 161, 3)) * 0.5
+        zeros_top = np.ones((428-322, 161, 3)) * 0.5
         zeros_left = np.ones((428, 53, 3)) * 0.5
         trampo_bed_shape_image = np.vstack((wraped_choped, zeros_top))
         trampo_bed_shape_image = np.hstack((zeros_left, trampo_bed_shape_image))
@@ -797,7 +799,8 @@ Trackbar_name = "Frames"
 ratio_image = 1.5
 
 movie_path = "../output/"
-movie_name = "d7b37ec2_0_0-37_269"  # "df297219_0_0-43_588"  #"PI world v1 ps1" #
+movie_name = "PI world v1 ps1"
+# "de5df385_0_0-35_783", "f9e565b6_0_0-25_063" "a62d4691_0_0-45_796" # "d7b37ec2_0_0-37_269"  # "df297219_0_0-43_588"
 movie_file = movie_path + movie_name + "_undistorted_images.pkl"
 
 # frames, num_frames = load_video_frames(movie_file)
@@ -805,10 +808,11 @@ file = open(movie_file, "rb")
 frames = pickle.load(file)
 num_frames = len(frames)
 frames_clone = frames.copy()
+frames_clone = frames.copy()
 
 
-## Load eye-tracking data
-eye_tracking_data_path = '/home/user/Documents/Eye-tracking/Eye_tracking_videos_Antonino/CloudExport/2021-10-23_13-30-50-c4b788d7/'
+## Load eye-tracking
+eye_tracking_data_path = '/home/user/Documents/Eye-tracking/Eye_tracking_videos_Antonino/CloudExport/2021-08-18_13-34-08-24bb26ee/' #2021-10-24_11-30-32-5c3d0dbe/' # 2021-08-18_15-17-38-43b8273a/' # 2021-10-23_13-30-50-c4b788d7/'
 filename = eye_tracking_data_path  + 'gaze.csv'
 filename_timestamps = eye_tracking_data_path + 'world_timestamps.csv'
 
@@ -1382,12 +1386,10 @@ rectangle_points_position_definition[43, :, :] = np.array([[53, 107],
 def nothing(x):
     return
 
-
-# movie_name = "df297219_0_0-43_588"  #"PI world v1 ps1" #
-# gaze_position_labels = movie_path + movie_name + "_labeling_points.pkl"
-# out_path = '/home/user/Documents/Programmation/rectangle-labelling/output/Results'
-# file = open(gaze_position_labels, "rb")
-# points_labels, active_points, curent_AOI_label, csv_eye_tracking = pickle.load(file)
+gaze_position_labels_file = movie_path + movie_name[:-4] + "_labeling_points.pkl"
+if os.path.exists(gaze_position_labels_file):
+    file = open(gaze_position_labels_file, "rb")
+    points_labels, active_points, curent_AOI_label, csv_eye_tracking = pickle.load(file)
 
 
 cv2.namedWindow(Image_name)
