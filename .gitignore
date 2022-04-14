@@ -133,3 +133,5 @@ output/Cachette/
 .DS_Store
 
 *.pkl
+
+.~lock.Trials_name_mapping.csv#

@@ -8,6 +8,9 @@ import scipy
 import matplotlib.pyplot as plt
 import pandas as pd
 import os.path
+import json
+import tkinter as tk
+from tkinter import filedialog
 
 
 def load_video_frames(video_file, num_frames=None):
@@ -73,7 +76,7 @@ def image_treatment(*args):
         if active_points[frame_counter, i] == True:
             this_frame_points_labels[:, i] = points_labels[key][:, frame_counter]
 
-    if len(np.nonzero(this_frame_points_labels[0, :])[0]) < 4:
+    if len(np.nonzero(this_frame_points_labels[0, :])[0]) != 4: ############################### ajouter active points
         empty_trampo_bed_image()
     else:
         lines_last_frame, borders_last_frame, lines_points_index, borders_points_index, unique_lines_index, unique_borders_index = find_lines_to_search_for(this_frame_points_labels)
@@ -471,7 +474,7 @@ def resize_image_for_disposition(wraped, rectangle_number):
         trampo_bed_shape_image = np.vstack((zeros_bottom, wraped_choped))
         trampo_bed_shape_image = np.hstack((zeros_left, trampo_bed_shape_image))
     elif rectangle_number == 34:
-        zeros_top = np.ones((428-53, 161-53, 3)) * 0.5
+        zeros_top = np.ones((428-107, 161-53, 3)) * 0.5
         zeros_left = np.ones((428, 53, 3)) * 0.5
         zeros_right = np.ones((428, 214-161, 3)) * 0.5
         trampo_bed_shape_image = np.vstack((wraped_choped, zeros_top))
@@ -683,6 +686,12 @@ def put_text():
         cv2.putText(trampo_bed_shape_image, 'Wall front', org, font, fontScale, color, thickness, cv2.LINE_AA)
     elif curent_AOI_label["Wall back"][frame_counter] == 1:
         cv2.putText(trampo_bed_shape_image, 'Wall back', org, font,fontScale, color, thickness, cv2.LINE_AA)
+    elif curent_AOI_label["Wall right"][frame_counter] == 1:
+        cv2.putText(trampo_bed_shape_image, 'Wall right', org, font, fontScale, color, thickness, cv2.LINE_AA)
+    elif curent_AOI_label["Wall left"][frame_counter] == 1:
+        cv2.putText(trampo_bed_shape_image, 'Wall left', org, font, fontScale, color, thickness, cv2.LINE_AA)
+    elif curent_AOI_label["Self"][frame_counter] == 1:
+        cv2.putText(trampo_bed_shape_image, 'Self', org, font, fontScale, color, thickness, cv2.LINE_AA)
     elif curent_AOI_label["Ceiling"][frame_counter] == 1:
         cv2.putText(trampo_bed_shape_image, 'Ceiling', org, font, fontScale, color, thickness, cv2.LINE_AA)
     elif curent_AOI_label["Not an acrobatics"][frame_counter] == 1:
@@ -716,6 +725,9 @@ def put_text():
 
 def looking_at_wall_front(*args):
     curent_AOI_label["Wall front"][frame_counter:] = 1
+    curent_AOI_label["Wall right"][frame_counter:] = 0
+    curent_AOI_label["Wall left"][frame_counter:] = 0
+    curent_AOI_label["Self"][frame_counter:] = 0
     curent_AOI_label["Wall back"][frame_counter:] = 0
     curent_AOI_label["Ceiling"][frame_counter:] = 0
     curent_AOI_label["Trampoline"][frame_counter:] = 0
@@ -726,6 +738,45 @@ def looking_at_wall_front(*args):
 def looking_at_wall_back(*args):
     curent_AOI_label["Wall back"][frame_counter:] = 1
     curent_AOI_label["Wall front"][frame_counter:] = 0
+    curent_AOI_label["Wall right"][frame_counter:] = 0
+    curent_AOI_label["Wall left"][frame_counter:] = 0
+    curent_AOI_label["Self"][frame_counter:] = 0
+    curent_AOI_label["Ceiling"][frame_counter:] = 0
+    curent_AOI_label["Trampoline"][frame_counter:] = 0
+    curent_AOI_label["Not an acrobatics"][frame_counter:] = 0
+    curent_AOI_label["Trampoline bed"][frame_counter:] = 0
+    return
+
+def looking_at_wall_right(*args):
+    curent_AOI_label["Wall right"][frame_counter:] = 1
+    curent_AOI_label["Wall front"][frame_counter:] = 0
+    curent_AOI_label["Wall left"][frame_counter:] = 0
+    curent_AOI_label["Self"][frame_counter:] = 0
+    curent_AOI_label["Wall back"][frame_counter:] = 0
+    curent_AOI_label["Ceiling"][frame_counter:] = 0
+    curent_AOI_label["Trampoline"][frame_counter:] = 0
+    curent_AOI_label["Not an acrobatics"][frame_counter:] = 0
+    curent_AOI_label["Trampoline bed"][frame_counter:] = 0
+    return
+
+def looking_at_wall_left(*args):
+    curent_AOI_label["Wall left"][frame_counter:] = 1
+    curent_AOI_label["Wall front"][frame_counter:] = 0
+    curent_AOI_label["Wall right"][frame_counter:] = 0
+    curent_AOI_label["Self"][frame_counter:] = 0
+    curent_AOI_label["Wall back"][frame_counter:] = 0
+    curent_AOI_label["Ceiling"][frame_counter:] = 0
+    curent_AOI_label["Trampoline"][frame_counter:] = 0
+    curent_AOI_label["Not an acrobatics"][frame_counter:] = 0
+    curent_AOI_label["Trampoline bed"][frame_counter:] = 0
+    return
+
+def looking_at_self(*args):
+    curent_AOI_label["Self"][frame_counter:] = 1
+    curent_AOI_label["Wall front"][frame_counter:] = 0
+    curent_AOI_label["Wall left"][frame_counter:] = 0
+    curent_AOI_label["Wall right"][frame_counter:] = 0
+    curent_AOI_label["Wall back"][frame_counter:] = 0
     curent_AOI_label["Ceiling"][frame_counter:] = 0
     curent_AOI_label["Trampoline"][frame_counter:] = 0
     curent_AOI_label["Not an acrobatics"][frame_counter:] = 0
@@ -736,6 +787,9 @@ def looking_at_ceiling(*args):
     curent_AOI_label["Ceiling"][frame_counter:] = 1
     curent_AOI_label["Wall back"][frame_counter:] = 0
     curent_AOI_label["Wall front"][frame_counter:] = 0
+    curent_AOI_label["Wall right"][frame_counter:] = 0
+    curent_AOI_label["Wall left"][frame_counter:] = 0
+    curent_AOI_label["Self"][frame_counter:] = 0
     curent_AOI_label["Trampoline"][frame_counter:] = 0
     curent_AOI_label["Not an acrobatics"][frame_counter:] = 0
     curent_AOI_label["Trampoline bed"][frame_counter:] = 0
@@ -745,6 +799,9 @@ def looking_at_trampo_bed(*args):
     curent_AOI_label["Trampoline bed"][frame_counter:] = 1
     curent_AOI_label["Wall back"][frame_counter:] = 0
     curent_AOI_label["Wall front"][frame_counter:] = 0
+    curent_AOI_label["Wall right"][frame_counter:] = 0
+    curent_AOI_label["Wall left"][frame_counter:] = 0
+    curent_AOI_label["Self"][frame_counter:] = 0
     curent_AOI_label["Ceiling"][frame_counter:] = 0
     curent_AOI_label["Not an acrobatics"][frame_counter:] = 0
     curent_AOI_label["Trampoline"][frame_counter:] = 0
@@ -754,6 +811,9 @@ def looking_at_trampo(*args):
     curent_AOI_label["Trampoline"][frame_counter:] = 1
     curent_AOI_label["Wall back"][frame_counter:] = 0
     curent_AOI_label["Wall front"][frame_counter:] = 0
+    curent_AOI_label["Wall right"][frame_counter:] = 0
+    curent_AOI_label["Wall left"][frame_counter:] = 0
+    curent_AOI_label["Self"][frame_counter:] = 0
     curent_AOI_label["Ceiling"][frame_counter:] = 0
     curent_AOI_label["Not an acrobatics"][frame_counter:] = 0
     curent_AOI_label["Trampoline bed"][frame_counter:] = 0
@@ -764,6 +824,9 @@ def looking_at_not_an_acrobatics(*args):
     curent_AOI_label["Trampoline"][frame_counter:] = 0
     curent_AOI_label["Wall back"][frame_counter:] = 0
     curent_AOI_label["Wall front"][frame_counter:] = 0
+    curent_AOI_label["Wall right"][frame_counter:] = 0
+    curent_AOI_label["Wall left"][frame_counter:] = 0
+    curent_AOI_label["Self"][frame_counter:] = 0
     curent_AOI_label["Ceiling"][frame_counter:] = 0
     curent_AOI_label["Trampoline bed"][frame_counter:] = 0
     return
@@ -798,10 +861,27 @@ Image_name = "Video"
 Trackbar_name = "Frames"
 ratio_image = 1.5
 
-movie_path = "../output/"
-movie_name = "PI world v1 ps1"
-# "de5df385_0_0-35_783", "f9e565b6_0_0-25_063" "a62d4691_0_0-45_796" # "d7b37ec2_0_0-37_269"  # "df297219_0_0-43_588"
+# $$$$$$$$$$$$$$$$$$
+
+root = tk.Tk()
+root.withdraw()
+file_path = filedialog.askopenfilename()
+
+movie_path = "../output/" ##### A changer
+last_slash = file_path.rfind('/')
+movie_name = file_path[last_slash+1 : -4].replace('.', '_')
+
 movie_file = movie_path + movie_name + "_undistorted_images.pkl"
+
+second_last_slash = file_path[:last_slash].rfind('/')
+eye_tracking_data_path = '/home/user/Documents/Eye-tracking/Eye_tracking_videos_Antonino/CloudExport/' + file_path[second_last_slash+1:last_slash+1] ###### A CHANGER
+filename = eye_tracking_data_path  + 'gaze.csv'
+filename_timestamps = eye_tracking_data_path + 'world_timestamps.csv'
+filename_info = eye_tracking_data_path + 'info.json'
+
+with open(filename_info, 'r') as f:
+  json_info = json.load(f)
+
 
 # frames, num_frames = load_video_frames(movie_file)
 file = open(movie_file, "rb")
@@ -809,12 +889,6 @@ frames = pickle.load(file)
 num_frames = len(frames)
 frames_clone = frames.copy()
 frames_clone = frames.copy()
-
-
-## Load eye-tracking
-eye_tracking_data_path = '/home/user/Documents/Eye-tracking/Eye_tracking_videos_Antonino/CloudExport/2021-08-18_13-34-08-24bb26ee/' #2021-10-24_11-30-32-5c3d0dbe/' # 2021-08-18_15-17-38-43b8273a/' # 2021-10-23_13-30-50-c4b788d7/'
-filename = eye_tracking_data_path  + 'gaze.csv'
-filename_timestamps = eye_tracking_data_path + 'world_timestamps.csv'
 
 csv_read = np.char.split(pd.read_csv(filename, sep='\t').values.astype('str'), sep=',')
 timestamps_read = np.char.split(pd.read_csv(filename_timestamps, sep='\t').values.astype('str'), sep=',')
@@ -865,6 +939,9 @@ curent_AOI_label = {"Trampoline": np.zeros((len(frames), )),
                 "Trampoline bed": np.zeros((len(frames), )),
                 "Wall front": np.zeros((len(frames), )),
                 "Wall back": np.zeros((len(frames), )),
+                "Wall right": np.zeros((len(frames), )),
+                "Wall left": np.zeros((len(frames), )),
+                "Self": np.zeros((len(frames), )),
                 "Ceiling": np.zeros((len(frames), )),
                 "Not an acrobatics": np.ones((len(frames), ))}
 label_keys = [key for key in points_labels.keys()]
@@ -1386,11 +1463,6 @@ rectangle_points_position_definition[43, :, :] = np.array([[53, 107],
 def nothing(x):
     return
 
-gaze_position_labels_file = movie_path + movie_name[:-4] + "_labeling_points.pkl"
-if os.path.exists(gaze_position_labels_file):
-    file = open(gaze_position_labels_file, "rb")
-    points_labels, active_points, curent_AOI_label, csv_eye_tracking = pickle.load(file)
-
 
 cv2.namedWindow(Image_name)
 cv2.createTrackbar(Trackbar_name, Image_name, 0, num_frames, nothing)
@@ -1420,10 +1492,26 @@ cv2.createTrackbar("Rien", "", 0, 1, nothing)
 cv2.createButton("Trampoline", looking_at_trampo, 0, cv2.QT_PUSH_BUTTON, 0)
 cv2.createButton("Wall front", looking_at_wall_front, 0, cv2.QT_PUSH_BUTTON, 0)
 cv2.createButton("Wall back", looking_at_wall_back, 0, cv2.QT_PUSH_BUTTON, 0)
+cv2.createButton("Wall right", looking_at_wall_right, 0, cv2.QT_PUSH_BUTTON, 0)
+cv2.createButton("Wall left", looking_at_wall_left, 0, cv2.QT_PUSH_BUTTON, 0)
+cv2.createButton("Self", looking_at_self, 0, cv2.QT_PUSH_BUTTON, 0)
 cv2.createButton("Ceiling", looking_at_ceiling, 0, cv2.QT_PUSH_BUTTON, 0)
 cv2.createButton("Not an acrobatics", looking_at_not_an_acrobatics, 0, cv2.QT_PUSH_BUTTON, 0)
 # cv2.createButton("OK", image_treatment, 0, cv2.QT_PUSH_BUTTON, 0)
 cv2.setMouseCallback(Image_name, mouse_click)
+
+
+gaze_position_labels_file = movie_path + movie_name[:-4] + "_labeling_points.pkl" # [:-4]
+if os.path.exists(gaze_position_labels_file):
+    file = open(gaze_position_labels_file, "rb")
+    points_labels, active_points, curent_AOI_label, csv_eye_tracking = pickle.load(file)
+    if "Wall right" not in curent_AOI_label.keys(): ############
+        curent_AOI_label["Wall right"] = np.zeros((len(frames),))
+        curent_AOI_label["Wall left"] = np.zeros((len(frames),))
+        curent_AOI_label["Self"] = np.zeros((len(frames),))
+
+    # $$$$$$$$$$$$$$$$$$
+
 
 playVideo = True
 image_clone = frames[frame_counter].copy()
@@ -1477,8 +1565,10 @@ while playVideo == True:
         point_choice(19, 19)
 
     if frame_counter % 15: # s'il ya un probleme, au moins on n'a pas tout perdu
-        with open(f'../output/{movie_name[:-4]}_labeling_points.pkl', 'wb') as handle:
+        with open(f'../output/Results/{json_info["wearer_name"]}/{movie_name}_tempo_labeling_points.pkl', 'wb') as handle:
             pickle.dump([points_labels, active_points, curent_AOI_label, csv_eye_tracking], handle)
+
+    # $$$$$$$$$$$$$$$$$$
 
     frame_counter = cv2.getTrackbarPos(Trackbar_name, Image_name)
     frames_clone = frames.copy()
@@ -1515,6 +1605,9 @@ while playVideo == True:
 
 cv2.destroyAllWindows()
 
-with open(f'../output/{movie_name}_labeling_points.pkl', 'wb') as handle:
+with open(f'../output/Results/{json_info["wearer_name"]}/{movie_name}_labeling_points.pkl', 'wb') as handle:
     pickle.dump([points_labels, active_points, curent_AOI_label, csv_eye_tracking], handle)
 
+
+
+# $$$$$$$$$$$$$$$$$$
