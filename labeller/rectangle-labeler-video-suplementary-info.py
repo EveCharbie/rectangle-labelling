@@ -37,6 +37,10 @@ def draw_points_and_lines():
     small_image_clone_eye_before = np.zeros(np.shape(frames_clone[frame_counter]), dtype=np.uint8)
     small_image_clone_eye_before[:] = frames_clone[frame_counter][:]
     eye_frames = np.where(csv_eye_tracking[:, 4] == frame_counter)[0]
+
+    if np.sum(active_points[frame_counter, :]) > 0:
+        looking_at_trampo_bed()
+
     for i in range(len(eye_frames)):
         # small_image_clone_eye_before[int(csv_eye_tracking[eye_frames[i], 2] - 3):
         #                              int(csv_eye_tracking[eye_frames[i], 2] + 4), \
@@ -58,6 +62,7 @@ def draw_points_and_lines():
                     cv2.line(small_image_clone_eye_before, mouse_click_position, line_position, line_color, thickness=1)
 
     cv2.imshow(Image_name, small_image_clone_eye_before)
+
     return
 
 def xy_to_rtheta(x0, x1, y0, y1):
@@ -76,7 +81,7 @@ def image_treatment(*args):
         if active_points[frame_counter, i] == True:
             this_frame_points_labels[:, i] = points_labels[key][:, frame_counter]
 
-    if len(np.nonzero(this_frame_points_labels[0, :])[0]) != 4: ############################### ajouter active points
+    if np.sum(active_points[frame_counter, :]) != 4:
         empty_trampo_bed_image()
     else:
         lines_last_frame, borders_last_frame, lines_points_index, borders_points_index, unique_lines_index, unique_borders_index = find_lines_to_search_for(this_frame_points_labels)
@@ -796,15 +801,15 @@ def looking_at_ceiling(*args):
     return
 
 def looking_at_trampo_bed(*args):
-    curent_AOI_label["Trampoline bed"][frame_counter:] = 1
-    curent_AOI_label["Wall back"][frame_counter:] = 0
-    curent_AOI_label["Wall front"][frame_counter:] = 0
-    curent_AOI_label["Wall right"][frame_counter:] = 0
-    curent_AOI_label["Wall left"][frame_counter:] = 0
-    curent_AOI_label["Self"][frame_counter:] = 0
-    curent_AOI_label["Ceiling"][frame_counter:] = 0
-    curent_AOI_label["Not an acrobatics"][frame_counter:] = 0
-    curent_AOI_label["Trampoline"][frame_counter:] = 0
+    curent_AOI_label["Trampoline bed"][frame_counter] = 1
+    curent_AOI_label["Wall back"][frame_counter] = 0
+    curent_AOI_label["Wall front"][frame_counter] = 0
+    curent_AOI_label["Wall right"][frame_counter] = 0
+    curent_AOI_label["Wall left"][frame_counter] = 0
+    curent_AOI_label["Self"][frame_counter] = 0
+    curent_AOI_label["Ceiling"][frame_counter] = 0
+    curent_AOI_label["Not an acrobatics"][frame_counter] = 0
+    curent_AOI_label["Trampoline"][frame_counter] = 0
     return
 
 def looking_at_trampo(*args):
@@ -865,16 +870,16 @@ ratio_image = 1.5
 
 root = tk.Tk()
 root.withdraw()
-file_path = filedialog.askopenfilename()
+file_path = filedialog.askopenfilename(initialdir = "/home/user/Documents/Eye-tracking/PupilData/CloudExport/")
 
-movie_path = "../output/" ##### A changer
+movie_path = "/home/user/Documents/Eye-tracking/PupilData/undistorted_videos/"
 last_slash = file_path.rfind('/')
 movie_name = file_path[last_slash+1 : -4].replace('.', '_')
 
 movie_file = movie_path + movie_name + "_undistorted_images.pkl"
 
 second_last_slash = file_path[:last_slash].rfind('/')
-eye_tracking_data_path = '/home/user/Documents/Eye-tracking/Eye_tracking_videos_Antonino/CloudExport/' + file_path[second_last_slash+1:last_slash+1] ###### A CHANGER
+eye_tracking_data_path = '/home/user/Documents/Eye-tracking/PupilData/CloudExport/' + file_path[second_last_slash+1:last_slash+1]
 filename = eye_tracking_data_path  + 'gaze.csv'
 filename_timestamps = eye_tracking_data_path + 'world_timestamps.csv'
 filename_info = eye_tracking_data_path + 'info.json'
@@ -1497,11 +1502,10 @@ cv2.createButton("Wall left", looking_at_wall_left, 0, cv2.QT_PUSH_BUTTON, 0)
 cv2.createButton("Self", looking_at_self, 0, cv2.QT_PUSH_BUTTON, 0)
 cv2.createButton("Ceiling", looking_at_ceiling, 0, cv2.QT_PUSH_BUTTON, 0)
 cv2.createButton("Not an acrobatics", looking_at_not_an_acrobatics, 0, cv2.QT_PUSH_BUTTON, 0)
-# cv2.createButton("OK", image_treatment, 0, cv2.QT_PUSH_BUTTON, 0)
 cv2.setMouseCallback(Image_name, mouse_click)
 
 
-gaze_position_labels_file = movie_path + movie_name[:-4] + "_labeling_points.pkl" # [:-4]
+gaze_position_labels_file = "/home/user/Documents/Eye-tracking/PupilData/points_labeled/" + movie_name + "_labeling_points.pkl" # [:-4]
 if os.path.exists(gaze_position_labels_file):
     file = open(gaze_position_labels_file, "rb")
     points_labels, active_points, curent_AOI_label, csv_eye_tracking = pickle.load(file)
@@ -1565,6 +1569,8 @@ while playVideo == True:
         point_choice(19, 19)
 
     if frame_counter % 15: # s'il ya un probleme, au moins on n'a pas tout perdu
+        if not os.path.exists(f'../output/Results/{json_info["wearer_name"]}'):
+            os.makedirs(f'../output/Results/{json_info["wearer_name"]}')
         with open(f'../output/Results/{json_info["wearer_name"]}/{movie_name}_tempo_labeling_points.pkl', 'wb') as handle:
             pickle.dump([points_labels, active_points, curent_AOI_label, csv_eye_tracking], handle)
 
@@ -1605,7 +1611,7 @@ while playVideo == True:
 
 cv2.destroyAllWindows()
 
-with open(f'../output/Results/{json_info["wearer_name"]}/{movie_name}_labeling_points.pkl', 'wb') as handle:
+with open("/home/user/Documents/Eye-tracking/PupilData/points_labeled/" + movie_name + "_labeling_points.pkl", 'wb') as handle:
     pickle.dump([points_labels, active_points, curent_AOI_label, csv_eye_tracking], handle)
 
 
