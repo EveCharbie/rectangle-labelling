@@ -54,21 +54,22 @@ csv_name = "/home/user/Documents/Programmation/rectangle-labelling/Trials_name_m
 csv_table = np.char.split(pd.read_csv(csv_name, sep='\t').values.astype('str'), sep=',')
 
 for i_trial in range(len(csv_table)):
-    movie_path = "../output/"
+    movie_path = "/home/user/Documents/Eye-tracking/PupilData/points_labeled/"
     movie_name = csv_table[i_trial][0][6].replace('.', '_')
     gaze_position_labels = movie_path + movie_name + "_labeling_points.pkl"
     out_path = '/home/user/Documents/Programmation/rectangle-labelling/output/Results'
     subject_name = csv_table[i_trial][0][0]
     move_names = csv_table[i_trial][0][1].split(" ")
     move_orientation = [int(x) for x in csv_table[i_trial][0][2].split(" ")]
+    subject_expertise = csv_table[i_trial][0][8]
 
     file = open(gaze_position_labels, "rb")
     points_labels, active_points, curent_AOI_label, csv_eye_tracking = pickle.load(file)
 
     zeros_clusters_index = curent_AOI_label["Not an acrobatics"][:-1] - curent_AOI_label["Not an acrobatics"][1:]
     zeros_clusters_index = np.hstack((0, zeros_clusters_index))
-    end_of_move_index = np.where(zeros_clusters_index == -1)[0].tolist() # [np.where(curent_AOI_label["Wall front"] == 1)[0][0]] ###############3
-    start_of_move_index = np.where(zeros_clusters_index == 1)[0].tolist() # [np.where(points_labels["0"][0, :] != 0)[0][-1]] ##############
+    end_of_move_index = np.where(zeros_clusters_index == -1)[0].tolist()
+    start_of_move_index = np.where(zeros_clusters_index == 1)[0].tolist()
 
     if len(move_names) != len(start_of_move_index) or len(move_names) != len(end_of_move_index):
         raise RuntimeError("Not the right number of skills!")
@@ -116,6 +117,12 @@ for i_trial in range(len(csv_table)):
 
         centers_gaze_bed[i] = centers_gaze_bed_i
 
+        plt.figure()
+        put_lines_on_fig()
+        img = points_to_gaussian_heatmap(centers_gaze_bed[i], image_height, image_width, gaussian_width)
+        plt.imshow(img)
+        plt.title(f"{subject_name}({subject_expertise}): {move_names[i]}")
+
         move_summary[i] = {"movement_name": move_names[i],
                            "subject_name": subject_name,
                            "movie_name": movie_name,
@@ -134,13 +141,9 @@ for i_trial in range(len(csv_table)):
         with open(f'{out_path}/{subject_name}/{move_names[i]}/{movie_name}_heat_map_{i}.pkl', 'wb') as handle:
             pickle.dump(move_summary[i], handle)
 
-        plt.figure()
-        put_lines_on_fig()
-        img = points_to_gaussian_heatmap(centers_gaze_bed[i], image_height, image_width, gaussian_width)
-        plt.imshow(img)
         plt.savefig(f"{out_path}/{subject_name}/{move_names[i]}/{movie_name}_{i}_heatmap.png", format="png")
-        plt.show()
-
+        # plt.show()
+        print(f"Generated {subject_name}({subject_expertise}): {move_names[i]}")
 
     with open(f'{gaze_position_labels[:-20]}_heat_map.pkl', 'wb') as handle:
         pickle.dump(move_summary, handle)
