@@ -1,6 +1,6 @@
-Subject,Movement_sequence,Movement_orientation,Xsens_recording_name,Xsens_comment,Pupil_folder,Pupil_recording_name,labeled,Expertise
-GuSe,4-o 8-1o 8—o,1 1 -1,,,2021-08-18_13-34-08-24bb26ee,df297219_0.0-43.588,Yes,Elite
-SoMe,41/ 42/ 41/ 42/ 41/ 42/ 41/ 42/ 41/ 42/,1 -1 -1 1 1 -1 -1 1 1 -1,,,2021-08-18_15-17-38-43b8273a,a62d4691_0.0-45.796,Yes,Elite
-SaBe,8-1< 811<,1 -1,,,2021-10-04_20-27-57-65cf5aec,f9e565b6_0.0-25.063,Yes,Elite
-AnBe,4-/ 43/ 4-/ 43/ 4-/ 43/,-1 -1 1 1 -1 -1,,,2021-10-23_13-30-50-c4b788d7,d7b37ec2_0.0-37.269,Yes,Subelite
-AlLe,4-o 41o 4-o 41o 4-o 41o 4-o 41o 4-o 41o,1 1 -1 -1 1 1 -1 -1 1 1,,,2021-10-24_11-30-32-5c3d0dbe,de5df385_0.0-35.783,Yes,Subelite
+Subject,Movement_sequence,Movement_orientation,Xsens_recording_name,Xsens_comment,Pupil_folder,Pupil_recording_name,labeled,Expertise,Picture_face,Picture_side
+GuSe,4-o 8-1o 8—o,1 1 -1,Test_17032021-007.mvnx,GuSe_8-1-8,2021-08-18_13-34-08-24bb26ee,df297219_0.0-43.588,Yes,Elite,IMG_7352.JPG,278714802_368303055344674_4324478428299023371_n.jpg
+SoMe,41/ 42/ 41/ 42/ 41/ 42/ 41/ 42/ 41/ 42/,1 -1 -1 1 1 -1 -1 1 1 -1,,,2021-08-18_15-17-38-43b8273a,a62d4691_0.0-45.796,Yes,Elite,,
+SaBe,8-1< 811<,1 -1,,,2021-10-04_20-27-57-65cf5aec,f9e565b6_0.0-25.063,Yes,Elite,,
+AnBe,4-/ 43/ 4-/ 43/ 4-/ 43/,-1 -1 1 1 -1 -1,,,2021-10-23_13-30-50-c4b788d7,d7b37ec2_0.0-37.269,Yes,Subelite,,
+AlLe,4-o 41o 4-o 41o 4-o 41o 4-o 41o 4-o 41o,1 1 -1 -1 1 1 -1 -1 1 1,,,2021-10-24_11-30-32-5c3d0dbe,de5df385_0.0-35.783,Yes,Subelite,,
