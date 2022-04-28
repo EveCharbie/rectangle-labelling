@@ -703,6 +703,8 @@ def put_text():
         cv2.putText(trampo_bed_shape_image, "Not an acrobatics", org, font, fontScale, color, thickness, cv2.LINE_AA)
     elif curent_AOI_label["Trampoline"][frame_counter] == 1:
         cv2.putText(trampo_bed_shape_image, "Trampoline", org, font, fontScale, color, thickness, cv2.LINE_AA)
+    elif curent_AOI_label["Jump"][frame_counter] == 1:
+        cv2.putText(trampo_bed_shape_image, "Jump", org, font, fontScale, color, thickness, cv2.LINE_AA)
 
     cv2.putText(trampo_bed_shape_image, "0", (0+3, 0+13), font, fontScale, (180, 180, 180), thickness, cv2.LINE_AA)
     cv2.putText(trampo_bed_shape_image, "1", (53+3, 0+13), font, fontScale, (180, 180, 180), thickness, cv2.LINE_AA)
@@ -738,6 +740,7 @@ def looking_at_wall_front(*args):
     curent_AOI_label["Trampoline"][frame_counter:] = 0
     curent_AOI_label["Not an acrobatics"][frame_counter:] = 0
     curent_AOI_label["Trampoline bed"][frame_counter:] = 0
+    curent_AOI_label["Jump"][frame_counter:] = 0
     return
 
 def looking_at_wall_back(*args):
@@ -750,6 +753,7 @@ def looking_at_wall_back(*args):
     curent_AOI_label["Trampoline"][frame_counter:] = 0
     curent_AOI_label["Not an acrobatics"][frame_counter:] = 0
     curent_AOI_label["Trampoline bed"][frame_counter:] = 0
+    curent_AOI_label["Jump"][frame_counter:] = 0
     return
 
 def looking_at_wall_right(*args):
@@ -762,6 +766,7 @@ def looking_at_wall_right(*args):
     curent_AOI_label["Trampoline"][frame_counter:] = 0
     curent_AOI_label["Not an acrobatics"][frame_counter:] = 0
     curent_AOI_label["Trampoline bed"][frame_counter:] = 0
+    curent_AOI_label["Jump"][frame_counter:] = 0
     return
 
 def looking_at_wall_left(*args):
@@ -774,6 +779,7 @@ def looking_at_wall_left(*args):
     curent_AOI_label["Trampoline"][frame_counter:] = 0
     curent_AOI_label["Not an acrobatics"][frame_counter:] = 0
     curent_AOI_label["Trampoline bed"][frame_counter:] = 0
+    curent_AOI_label["Jump"][frame_counter:] = 0
     return
 
 def looking_at_self(*args):
@@ -786,6 +792,7 @@ def looking_at_self(*args):
     curent_AOI_label["Trampoline"][frame_counter:] = 0
     curent_AOI_label["Not an acrobatics"][frame_counter:] = 0
     curent_AOI_label["Trampoline bed"][frame_counter:] = 0
+    curent_AOI_label["Jump"][frame_counter:] = 0
     return
 
 def looking_at_ceiling(*args):
@@ -798,6 +805,7 @@ def looking_at_ceiling(*args):
     curent_AOI_label["Trampoline"][frame_counter:] = 0
     curent_AOI_label["Not an acrobatics"][frame_counter:] = 0
     curent_AOI_label["Trampoline bed"][frame_counter:] = 0
+    curent_AOI_label["Jump"][frame_counter:] = 0
     return
 
 def looking_at_trampo_bed(*args):
@@ -810,6 +818,7 @@ def looking_at_trampo_bed(*args):
     curent_AOI_label["Ceiling"][frame_counter] = 0
     curent_AOI_label["Not an acrobatics"][frame_counter] = 0
     curent_AOI_label["Trampoline"][frame_counter] = 0
+    curent_AOI_label["Jump"][frame_counter:] = 0
     return
 
 def looking_at_trampo(*args):
@@ -822,6 +831,7 @@ def looking_at_trampo(*args):
     curent_AOI_label["Ceiling"][frame_counter:] = 0
     curent_AOI_label["Not an acrobatics"][frame_counter:] = 0
     curent_AOI_label["Trampoline bed"][frame_counter:] = 0
+    curent_AOI_label["Jump"][frame_counter:] = 0
     return
 
 def looking_at_not_an_acrobatics(*args):
@@ -834,6 +844,20 @@ def looking_at_not_an_acrobatics(*args):
     curent_AOI_label["Self"][frame_counter:] = 0
     curent_AOI_label["Ceiling"][frame_counter:] = 0
     curent_AOI_label["Trampoline bed"][frame_counter:] = 0
+    curent_AOI_label["Jump"][frame_counter:] = 0
+    return
+
+def looking_at_jump(*args):
+    curent_AOI_label["Jump"][frame_counter:] = 1
+    curent_AOI_label["Trampoline"][frame_counter:] = 0
+    curent_AOI_label["Wall back"][frame_counter:] = 0
+    curent_AOI_label["Wall front"][frame_counter:] = 0
+    curent_AOI_label["Wall right"][frame_counter:] = 0
+    curent_AOI_label["Wall left"][frame_counter:] = 0
+    curent_AOI_label["Self"][frame_counter:] = 0
+    curent_AOI_label["Ceiling"][frame_counter:] = 0
+    curent_AOI_label["Trampoline bed"][frame_counter:] = 0
+    curent_AOI_label["Not an acrobatics"][frame_counter:] = 0
     return
 
 def point_choice(*args):
@@ -948,7 +972,8 @@ curent_AOI_label = {"Trampoline": np.zeros((len(frames), )),
                 "Wall left": np.zeros((len(frames), )),
                 "Self": np.zeros((len(frames), )),
                 "Ceiling": np.zeros((len(frames), )),
-                "Not an acrobatics": np.ones((len(frames), ))}
+                "Not an acrobatics": np.ones((len(frames), )),
+                "Jump": np.ones((len(frames), ))}
 label_keys = [key for key in points_labels.keys()]
 current_click = 0
 active_points = np.zeros((num_frames, number_of_points_to_label))
@@ -1502,6 +1527,7 @@ cv2.createButton("Wall left", looking_at_wall_left, 0, cv2.QT_PUSH_BUTTON, 0)
 cv2.createButton("Self", looking_at_self, 0, cv2.QT_PUSH_BUTTON, 0)
 cv2.createButton("Ceiling", looking_at_ceiling, 0, cv2.QT_PUSH_BUTTON, 0)
 cv2.createButton("Not an acrobatics", looking_at_not_an_acrobatics, 0, cv2.QT_PUSH_BUTTON, 0)
+cv2.createButton("Jump", looking_at_jump, 0, cv2.QT_PUSH_BUTTON, 0)
 cv2.setMouseCallback(Image_name, mouse_click)
 
 
@@ -1513,6 +1539,8 @@ if os.path.exists(gaze_position_labels_file):
         curent_AOI_label["Wall right"] = np.zeros((len(frames),))
         curent_AOI_label["Wall left"] = np.zeros((len(frames),))
         curent_AOI_label["Self"] = np.zeros((len(frames),))
+    if "Jump" not in curent_AOI_label.keys():  ############
+        curent_AOI_label["Jump"] = np.zeros((len(frames),))
 
     # $$$$$$$$$$$$$$$$$$
 
