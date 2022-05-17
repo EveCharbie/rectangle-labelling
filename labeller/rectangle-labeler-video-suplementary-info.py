@@ -223,6 +223,7 @@ def find_points_next_frame(lines_new_vert, lines_new_horz, lines_new_vert_index,
         rho2, theta2 = line2
         A = np.array([
             [np.cos(theta1), np.sin(theta1)],
+
             [np.cos(theta2), np.sin(theta2)]
         ])
         b = np.array([[rho1], [rho2]])
@@ -894,16 +895,16 @@ ratio_image = 1.5
 
 root = tk.Tk()
 root.withdraw()
-file_path = filedialog.askopenfilename(initialdir = "/home/user/Documents/Eye-tracking/PupilData/CloudExport/")
+file_path = filedialog.askopenfilename(initialdir = "/home/user/disk/Eye-tracking/PupilData/CloudExport/")
 
-movie_path = "/home/user/Documents/Eye-tracking/PupilData/undistorted_videos/"
+movie_path = "/home/user/disk/Eye-tracking/PupilData/undistorted_videos/"
 last_slash = file_path.rfind('/')
 movie_name = file_path[last_slash+1 : -4].replace('.', '_')
 
 movie_file = movie_path + movie_name + "_undistorted_images.pkl"
 
 second_last_slash = file_path[:last_slash].rfind('/')
-eye_tracking_data_path = '/home/user/Documents/Eye-tracking/PupilData/CloudExport/' + file_path[second_last_slash+1:last_slash+1]
+eye_tracking_data_path = '/home/user/disk/Eye-tracking/PupilData/CloudExport/' + file_path[second_last_slash+1:last_slash+1]
 filename = eye_tracking_data_path  + 'gaze.csv'
 filename_timestamps = eye_tracking_data_path + 'world_timestamps.csv'
 filename_info = eye_tracking_data_path + 'info.json'
@@ -1531,7 +1532,7 @@ cv2.createButton("Jump", looking_at_jump, 0, cv2.QT_PUSH_BUTTON, 0)
 cv2.setMouseCallback(Image_name, mouse_click)
 
 
-gaze_position_labels_file = "/home/user/Documents/Eye-tracking/PupilData/points_labeled/" + movie_name + "_labeling_points.pkl" # [:-4]
+gaze_position_labels_file = "/home/user/disk/Eye-tracking/PupilData/points_labeled/" + movie_name + "_labeling_points.pkl" # [:-4]
 if os.path.exists(gaze_position_labels_file):
     file = open(gaze_position_labels_file, "rb")
     points_labels, active_points, curent_AOI_label, csv_eye_tracking = pickle.load(file)
@@ -1597,9 +1598,9 @@ while playVideo == True:
         point_choice(19, 19)
 
     if frame_counter % 15: # s'il ya un probleme, au moins on n'a pas tout perdu
-        if not os.path.exists(f'../output/Results/{json_info["wearer_name"]}'):
-            os.makedirs(f'../output/Results/{json_info["wearer_name"]}')
-        with open(f'../output/Results/{json_info["wearer_name"]}/{movie_name}_tempo_labeling_points.pkl', 'wb') as handle:
+        if not os.path.exists(f'/home/user/disk/Eye-tracking/Results/{json_info["wearer_name"]}'):
+            os.makedirs(f'/home/user/disk/Eye-tracking/Results/{json_info["wearer_name"]}')
+        with open(f'/home/user/disk/Eye-tracking/Results/{json_info["wearer_name"]}/{movie_name}_tempo_labeling_points.pkl', 'wb') as handle:
             pickle.dump([points_labels, active_points, curent_AOI_label, csv_eye_tracking], handle)
 
     # $$$$$$$$$$$$$$$$$$
@@ -1639,7 +1640,7 @@ while playVideo == True:
 
 cv2.destroyAllWindows()
 
-with open("/home/user/Documents/Eye-tracking/PupilData/points_labeled/" + movie_name + "_labeling_points.pkl", 'wb') as handle:
+with open("/home/user/disk/Eye-tracking/PupilData/points_labeled/" + movie_name + "_labeling_points.pkl", 'wb') as handle:
     pickle.dump([points_labels, active_points, curent_AOI_label, csv_eye_tracking], handle)
 
 
