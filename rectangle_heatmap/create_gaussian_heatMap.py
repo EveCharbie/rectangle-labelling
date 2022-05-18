@@ -30,19 +30,19 @@ def points_to_gaussian_heatmap(centers, height, width, scale):
     return img
 
 def put_lines_on_fig():
-    plt.plot(np.array([0, 214]), np.array([0, 0]), '-k', linewidth=1)
-    plt.plot(np.array([214, 214]), np.array([214, 428]), '-k', linewidth=1)
-    plt.plot(np.array([0, 214]), np.array([428, 428]), '-k', linewidth=1)
-    plt.plot(np.array([0, 0]), np.array([0, 428]), '-k', linewidth=1)
+    plt.plot(np.array([0, 214]), np.array([0, 0]), '-w', linewidth=1)
+    plt.plot(np.array([214, 214]), np.array([214, 428]), '-w', linewidth=1)
+    plt.plot(np.array([0, 214]), np.array([428, 428]), '-w', linewidth=1)
+    plt.plot(np.array([0, 0]), np.array([0, 428]), '-w', linewidth=1)
 
-    plt.plot(np.array([53, 53]), np.array([0, 428]), '-k', linewidth=1)
-    plt.plot(np.array([161, 161]), np.array([0, 428]), '-k', linewidth=1)
-    plt.plot(np.array([0, 214]), np.array([107, 107]), '-k', linewidth=1)
-    plt.plot(np.array([0, 214]), np.array([322, 322]), '-k', linewidth=1)
-    plt.plot(np.array([53, 161]), np.array([160, 160]), '-k', linewidth=1)
-    plt.plot(np.array([53, 161]), np.array([268, 268]), '-k', linewidth=1)
-    plt.plot(np.array([107 - 25, 107 + 25]), np.array([214, 214]), '-k', linewidth=1)
-    plt.plot(np.array([107, 107]), np.array([214 - 25, 214 + 25]), '-k', linewidth=1)
+    plt.plot(np.array([53, 53]), np.array([0, 428]), '-w', linewidth=1)
+    plt.plot(np.array([161, 161]), np.array([0, 428]), '-w', linewidth=1)
+    plt.plot(np.array([0, 214]), np.array([107, 107]), '-w', linewidth=1)
+    plt.plot(np.array([0, 214]), np.array([322, 322]), '-w', linewidth=1)
+    plt.plot(np.array([53, 161]), np.array([160, 160]), '-w', linewidth=1)
+    plt.plot(np.array([53, 161]), np.array([268, 268]), '-w', linewidth=1)
+    plt.plot(np.array([107 - 25, 107 + 25]), np.array([214, 214]), '-w', linewidth=1)
+    plt.plot(np.array([107, 107]), np.array([214 - 25, 214 + 25]), '-w', linewidth=1)
     return
 
 
@@ -54,24 +54,49 @@ csv_name = "/home/user/Documents/Programmation/rectangle-labelling/Trials_name_m
 csv_table = np.char.split(pd.read_csv(csv_name, sep='\t').values.astype('str'), sep=',')
 
 for i_trial in range(len(csv_table)):
-    movie_path = "/home/user/Documents/Eye-tracking/PupilData/points_labeled/"
-    movie_name = csv_table[i_trial][0][6].replace('.', '_')
+    if csv_table[i_trial][0][12] != 'True':
+        continue
+    movie_path = "/home/user/disk/Eye-tracking/PupilData/points_labeled/"
+    movie_name = csv_table[i_trial][0][7].replace('.', '_')
     gaze_position_labels = movie_path + movie_name + "_labeling_points.pkl"
-    out_path = '/home/user/Documents/Programmation/rectangle-labelling/output/Results'
+    out_path = '/home/user/disk/Eye-tracking/Results'
     subject_name = csv_table[i_trial][0][0]
     move_names = csv_table[i_trial][0][1].split(" ")
-    move_orientation = [int(x) for x in csv_table[i_trial][0][2].split(" ")]
-    subject_expertise = csv_table[i_trial][0][8]
+    repetition_number = csv_table[i_trial][0][2].split(" ")
+    move_orientation = [int(x) for x in csv_table[i_trial][0][3].split(" ")]
+    subject_expertise = csv_table[i_trial][0][9]
 
     file = open(gaze_position_labels, "rb")
     points_labels, active_points, curent_AOI_label, csv_eye_tracking = pickle.load(file)
 
     zeros_clusters_index = curent_AOI_label["Not an acrobatics"][:-1] - curent_AOI_label["Not an acrobatics"][1:]
     zeros_clusters_index = np.hstack((0, zeros_clusters_index))
-    end_of_move_index = np.where(zeros_clusters_index == -1)[0].tolist()
-    start_of_move_index = np.where(zeros_clusters_index == 1)[0].tolist()
 
-    if len(move_names) != len(start_of_move_index) or len(move_names) != len(end_of_move_index):
+    end_of_cluster_index_image = np.where(zeros_clusters_index == -1)[0].tolist()
+    start_of_cluster_index_image = np.where(zeros_clusters_index == 1)[0].tolist()
+
+    start_of_move_index_image = []
+    end_of_move_index_image = []
+    start_of_jump_index_image = []
+    end_of_jump_index_image = []
+    for i in range(len(start_of_cluster_index_image)):
+        if curent_AOI_label["Jump"][start_of_cluster_index_image[i] + 1] == 1:
+            start_of_jump_index_image += [start_of_cluster_index_image[i]]
+            end_of_jump_index_image += [end_of_cluster_index_image[i]]
+        else:
+            start_of_move_index_image += [start_of_cluster_index_image[i]]
+            end_of_move_index_image += [end_of_cluster_index_image[i]]
+
+    # zeros_clusters_index = curent_AOI_label["Not an acrobatics"][:-1] - curent_AOI_label["Not an acrobatics"][1:]
+    # zeros_clusters_index = np.hstack((0, zeros_clusters_index))
+    # end_of_move_index = np.where(zeros_clusters_index == -1)[0].tolist()
+    # start_of_move_index = np.where(zeros_clusters_index == 1)[0].tolist()
+
+    if len(move_names) != len(start_of_move_index_image) or len(move_names) != len(end_of_move_index_image):
+        plt.figure()
+        plt.plot(curent_AOI_label["Not an acrobatics"], '-k')
+        plt.plot(curent_AOI_label["Jump"], '-r')
+        plt.show()
         raise RuntimeError("Not the right number of skills!")
 
     move_summary = [{} for i in range(len(move_names))]
@@ -81,8 +106,8 @@ for i_trial in range(len(csv_table)):
     gaze_wall_back_index = [[] for i in range(len(move_names))]
     gaze_ceiling_index = [[] for i in range(len(move_names))]
     for i in range(len(move_names)):
-        start = start_of_move_index[i]
-        end = end_of_move_index[i]
+        start = start_of_move_index_image[i]
+        end = end_of_move_index_image[i]
         centers_gaze_bed_i = []
         gaze_total_move = end - start
         number_of_trampoline_bed = 0
@@ -120,8 +145,9 @@ for i_trial in range(len(csv_table)):
         plt.figure()
         put_lines_on_fig()
         img = points_to_gaussian_heatmap(centers_gaze_bed[i], image_height, image_width, gaussian_width)
-        plt.imshow(img)
+        plt.imshow(img, cmap=plt.get_cmap('plasma'))
         plt.title(f"{subject_name}({subject_expertise}): {move_names[i]}")
+        plt.axis('off')
 
         move_summary[i] = {"movement_name": move_names[i],
                            "subject_name": subject_name,
@@ -138,10 +164,10 @@ for i_trial in range(len(csv_table)):
         if not os.path.exists(f'{out_path}/{subject_name}/{move_names[i]}'):
             os.makedirs(f'{out_path}/{subject_name}/{move_names[i]}')
 
-        with open(f'{out_path}/{subject_name}/{move_names[i]}/{movie_name}_heat_map_{i}.pkl', 'wb') as handle:
+        with open(f'{out_path}/{subject_name}/{move_names[i]}/{movie_name}_heat_map_{repetition_number[i]}.pkl', 'wb') as handle:
             pickle.dump(move_summary[i], handle)
 
-        plt.savefig(f"{out_path}/{subject_name}/{move_names[i]}/{movie_name}_{i}_heatmap.png", format="png")
+        plt.savefig(f"{out_path}/{subject_name}/{move_names[i]}/{movie_name}_heat_map_{repetition_number[i]}.png", format="png")
         # plt.show()
         print(f"Generated {subject_name}({subject_expertise}): {move_names[i]}")
 
