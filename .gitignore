@@ -201,3 +201,7 @@ output/Results/SoMe/42/a62d4691_0_0-45_796_9_heatmap.png
 *.mp4
 
 *.png
+
+output/Results/GuSe/
+
+*.m~
