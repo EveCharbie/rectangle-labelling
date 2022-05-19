@@ -132,8 +132,6 @@ output/Cachette/
 
 .DS_Store
 
-*.pkl
-
 .~lock.Trials_name_mapping.csv#
 
 output/Results/AlLe/4-o/de5df385_0_0-35_783_0_heatmap.png
