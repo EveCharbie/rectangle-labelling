@@ -24,7 +24,7 @@ statcfg.avgovertime = 'no' ;
 statcfg.avgchan = 'no' ;
 statcfg.avgoverfreq = 'no' ;
 statcfg.method = 'montecarlo' ;
-statcfg.numrandomization = 1000 ; % devrait etre 1000
+statcfg.numrandomization = 100 ; % devrait etre 1000
 statcfg.statistic = 'depsamplesT' ;
 statcfg.tail = 0 ;
 statcfg.correcttail = 'prob' ;
@@ -36,7 +36,8 @@ statcfg.clusteralpha = 0.05 ;
 statcfg.clustertail = 0 ;
 statcfg.minnbchan = 0 ;
 statcfg.clusterstatistic = 'maxsum' ;
-statcfg.neighbours = [] ;
+neighbours = load('immediate_neighbours_rectangle.mat');
+statcfg.neighbours = []; %neighbours.neighbours;
 
 
 
@@ -104,8 +105,8 @@ Stat_TF.Termi=Compil_termi ;
 
 imagesc(squeeze(ftStat.prob)') ; j=j+1 ;
 
-
-clear ftAllFiles ftStat Stat_TF design Compil_init Compil_termi
+save('GuSe_AlLe_40.mat', 'ftStat')
+% clear ftAllFiles ftStat Stat_TF design Compil_init Compil_termi
 
 
 
