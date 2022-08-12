@@ -77,7 +77,7 @@ def load_pupil(gaze_position_labels, eye_tracking_data_path):
     end_of_jump_index = time_stamps_eye_tracking_index_on_pupil[end_of_jump_index_image]
     start_of_jump_index = time_stamps_eye_tracking_index_on_pupil[start_of_jump_index_image]
 
-    return curent_AOI_label, csv_eye_tracking, csv_eye_tracking, start_of_move_index, end_of_move_index, start_of_jump_index, end_of_jump_index
+    return curent_AOI_label, csv_eye_tracking, csv_eye_tracking, start_of_move_index, end_of_move_index, start_of_jump_index, end_of_jump_index, start_of_move_index_image, end_of_move_index_image, start_of_jump_index_image, end_of_jump_index_image
 
 
 def points_to_gaussian_heatmap(centers, height, width, scale):
@@ -232,7 +232,7 @@ def __main__():
         move_orientation = [int(x) for x in csv_table[i_trial][0][3].split(" ")]
         subject_expertise = csv_table[i_trial][0][9]
 
-        curent_AOI_label, csv_eye_tracking, csv_eye_tracking, start_of_move_index, end_of_move_index, start_of_jump_index, end_of_jump_index = load_pupil(
+        curent_AOI_label, csv_eye_tracking, csv_eye_tracking, start_of_move_index, end_of_move_index, start_of_jump_index, end_of_jump_index, start_of_move_index_image, end_of_move_index_image, start_of_jump_index_image, end_of_jump_index_image = load_pupil(
             gaze_position_labels, eye_tracking_data_path)
 
 
