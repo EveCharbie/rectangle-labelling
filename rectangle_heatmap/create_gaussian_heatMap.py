@@ -14,11 +14,13 @@ def load_pupil(gaze_position_labels, eye_tracking_data_path):
     points_labels, active_points, curent_AOI_label, csv_eye_tracking = pickle.load(file)
 
     filename_gaze = eye_tracking_data_path + 'gaze.csv'
+    filename_blink = eye_tracking_data_path + 'blinks.csv'
     filename_timestamps = eye_tracking_data_path + 'world_timestamps.csv'
     filename_info = eye_tracking_data_path + 'info.json'
 
 
-    csv_gaze_read = np.char.split(pd.read_csv(filename_gaze, sep='\t').values.astype('str'), sep=',')
+    # csv_gaze_read = np.char.split(pd.read_csv(filename_gaze, sep='\t').values.astype('str'), sep=',')
+    csv_blink_read = np.char.split(pd.read_csv(filename_blink, sep='\t').values.astype('str'), sep=',')
     timestamp_image_read = np.char.split(pd.read_csv(filename_timestamps, sep='\t').values.astype('str'), sep=',')
     timestamp_image = np.zeros((len(timestamp_image_read, )))
     for i in range(len(timestamp_image_read)):
@@ -33,12 +35,21 @@ def load_pupil(gaze_position_labels, eye_tracking_data_path):
                 SCENE_CAMERA_SERIAL_NUMBER = serial_number_str[pos+1:pos+6]
                 break
 
-    csv_eye_tracking = np.zeros((len(csv_gaze_read), 7))
-    for i in range(len(csv_gaze_read)):
-        csv_eye_tracking[i, 0] = float(csv_gaze_read[i][0][2])  # timestemp
-        csv_eye_tracking[i, 1] = int(round(float(csv_gaze_read[i][0][3])))  # pos_x
-        csv_eye_tracking[i, 2] = int(round(float(csv_gaze_read[i][0][4])))  # pos_y
-        csv_eye_tracking[i, 4] = np.argmin(np.abs(csv_eye_tracking[i, 0] - timestamp_image))  # closest image timestemp
+    # csv_eye_tracking = np.zeros((len(csv_gaze_read), 7))
+    # for i in range(len(csv_gaze_read)):
+    #     csv_eye_tracking[i, 0] = float(csv_gaze_read[i][0][2])  # timestemp
+    #     csv_eye_tracking[i, 1] = int(round(float(csv_gaze_read[i][0][3])))  # pos_x
+    #     csv_eye_tracking[i, 2] = int(round(float(csv_gaze_read[i][0][4])))  # pos_y
+    #     csv_eye_tracking[i, 4] = np.argmin(np.abs(csv_eye_tracking[i, 0] - timestamp_image))  # closest image timestemp
+
+
+    blinks = np.zeros((len(csv_blink_read), 4))
+    for i in range(len(csv_blink_read)):
+        blinks[i, 0] = float(csv_blink_read[i][0][3])  # start
+        blinks[i, 1] = float(csv_blink_read[i][0][4])  # end
+        blinks[i, 2] = float(csv_blink_read[i][0][5])  # duration
+        blinks[i, 3] = np.argmin(np.abs(blinks[i, 0] - timestamp_image))  # closest image timestemp
+
 
     # embed()
     # plt.figure()
@@ -77,7 +88,7 @@ def load_pupil(gaze_position_labels, eye_tracking_data_path):
     end_of_jump_index = time_stamps_eye_tracking_index_on_pupil[end_of_jump_index_image]
     start_of_jump_index = time_stamps_eye_tracking_index_on_pupil[start_of_jump_index_image]
 
-    return curent_AOI_label, csv_eye_tracking, csv_eye_tracking, start_of_move_index, end_of_move_index, start_of_jump_index, end_of_jump_index
+    return curent_AOI_label, csv_eye_tracking, blinks, start_of_move_index, end_of_move_index, start_of_jump_index, end_of_jump_index, start_of_move_index_image, end_of_move_index_image, start_of_jump_index_image, end_of_jump_index_image, SCENE_CAMERA_SERIAL_NUMBER
 
 
 def points_to_gaussian_heatmap(centers, height, width, scale):
@@ -117,12 +128,11 @@ def put_lines_on_fig():
     plt.plot(np.array([107, 107]), np.array([214 - 25, 214 + 25]), '-w', linewidth=1)
     return
 
-def run_create_heatmaps(move_names, start_of_move_index_image, end_of_move_index_image, curent_AOI_label, csv_eye_tracking):
+def run_create_heatmaps(subject_name, subject_expertise, move_names, move_orientation, repetition_number, movie_name, out_path, start_of_move_index_image, end_of_move_index_image, curent_AOI_label, csv_eye_tracking, gaze_position_labels):
+
     image_width = 214
     image_height = 428
     gaussian_width = 50
-
-
 
     if len(move_names) != len(start_of_move_index_image) or len(move_names) != len(end_of_move_index_image):
         plt.figure()
@@ -134,9 +144,9 @@ def run_create_heatmaps(move_names, start_of_move_index_image, end_of_move_index
     move_summary = [{} for i in range(len(move_names))]
 
     centers_gaze_bed = [[] for i in range(len(move_names))]
-    gaze_wall_front_index = [[] for i in range(len(move_names))]
-    gaze_wall_back_index = [[] for i in range(len(move_names))]
-    gaze_ceiling_index = [[] for i in range(len(move_names))]
+    # gaze_wall_front_index = [[] for i in range(len(move_names))]
+    # gaze_wall_back_index = [[] for i in range(len(move_names))]
+    # gaze_ceiling_index = [[] for i in range(len(move_names))]
     for i in range(len(move_names)):
         start = start_of_move_index_image[i]
         end = end_of_move_index_image[i]
@@ -201,7 +211,7 @@ def run_create_heatmaps(move_names, start_of_move_index_image, end_of_move_index
 
         plt.savefig(f"{out_path}/{subject_name}/{move_names[i]}/{movie_name}_heat_map_{repetition_number[i]}.png", format="png")
         # plt.show()
-        print(f"Generated {subject_name}({subject_expertise}): {move_names[i]}")
+        print(f"Generated heatmap {subject_name}({subject_expertise}): {move_names[i]}")
 
     with open(f'{gaze_position_labels[:-20]}_heat_map.pkl', 'wb') as handle:
         pickle.dump(move_summary, handle)
