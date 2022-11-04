@@ -53,12 +53,16 @@ def undistort(img, balance=0.0, dim2=None, dim3=None):
 	# if __name__ == '__main__':
 	# 	for p in sys.argv[1:]:
 
+
+
+
 def nothing(x):
 	return
-
+'e6e4181c_0_0-44_507.mp4
 ratio_image = 1.5
 movie_file_path = '../input/'
-movie_file_name = 'PI world v1 ps1.mp4'
+movie_file_name = '8ae28b5_0_0-25_798.mp4'
+'
 movie_file = movie_file_path + movie_file_name
 frames, num_frames = load_video_frames(movie_file)
 min_frames = 600
