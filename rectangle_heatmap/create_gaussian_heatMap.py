@@ -84,6 +84,8 @@ def load_pupil(gaze_position_labels, eye_tracking_data_path):
     for i in range(len(timestamp_image)):
         time_stamps_eye_tracking_index_on_pupil[i] = np.argmin(np.abs(csv_eye_tracking[:, 0] - float(timestamp_image[i])))
 
+    # Don't mess with begining as an acrobatic, this is a labeling error, not a real behavior
+    curent_AOI_label["Not an acrobatics"][0] = 1
 
     zeros_clusters_index = curent_AOI_label["Not an acrobatics"][:-1] - curent_AOI_label["Not an acrobatics"][1:]
     zeros_clusters_index = np.hstack((0, zeros_clusters_index))
