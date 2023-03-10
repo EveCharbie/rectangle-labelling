@@ -10,23 +10,21 @@ import tkinter as tk
 from tkinter import filedialog
 
 
-def load_video_frames(video_file, num_frames=None):
+def load_video_frames(video_file):
+
     video = cv2.VideoCapture(video_file)
     frames = []
-
-    if num_frames is None:
-        num_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
-
-    num_frames_update = 0
-    for _ in tqdm(range(num_frames), desc='Loading video'):
+    num_frames = 0
+    while True:
         ret, frame = video.read()
         if type(frame) == np.ndarray:
             frames.append(frame)
-            num_frames_update+=1
-
+            num_frames+=1
+        else:
+            break
     video.release()
 
-    return frames, num_frames_update
+    return frames, num_frames
 
 def put_text(image_clone):
 
@@ -84,15 +82,18 @@ else:
 root = tk.Tk()
 root.withdraw()
 file_path = filedialog.askopenfilename(initialdir=home_path + "/disk/Eye-tracking/PupilData/CloudExport/")
-# file_path = home_path + '/disk/Eye-tracking/PupilData/CloudExport/AlLe/2021-10-24_11-08-49-904e86c3/PI world v1 ps1.mp4'
 
 last_slash = file_path.rfind('/')
 movie_path = file_path[:last_slash+1]
 movie_name = file_path[last_slash+1 : -4].replace('.', '_')
 
 movie_file = movie_path + "PI world v1 ps1" + '.mp4'
-movie_file_right_eye = movie_path + "PI right v1 ps1" + '.mp4'
-movie_file_left_eye = movie_path + "PI left v1 ps1" + '.mp4'
+if os.path.exists(movie_path + "PI right v1 ps1" + '.mp4'):
+    movie_file_right_eye = movie_path + "PI right v1 ps1" + '.mp4'
+    movie_file_left_eye = movie_path + "PI left v1 ps1" + '.mp4'
+else:
+    movie_file_right_eye = movie_path + "PI right v1 ps1" + '.mjpeg'
+    movie_file_left_eye = movie_path + "PI left v1 ps1" + '.mjpeg'
 
 world_time_stamps_file = movie_path + "PI world v1 ps1" + '.time'
 right_eye_time_stamps_file = movie_path + "PI right v1 ps1" + '.time'
@@ -119,7 +120,7 @@ current_state_label = {"Eyes closed": np.ones((len(frames_left_eye), )),
 labeled_file = home_path + "/disk/Eye-tracking/PupilData/blinks_labeled/" + movie_name + "_labeling_blinks.pkl" # [:-4]
 if os.path.exists(labeled_file):
     file = open(labeled_file, "rb")
-    current_state_label = pickle.load(file)
+    current_state_label, left_eye_time_stamps_data = pickle.load(file)
 
 cv2.namedWindow("Video")
 cv2.namedWindow("Right eye")
