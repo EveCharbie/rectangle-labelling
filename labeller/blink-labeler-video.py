@@ -16,7 +16,7 @@ def load_video_frames(video_file, max_frames=None):
     frames = []
     num_frames = 0
     if max_frames == None:
-    	max_frames = 100000000
+        max_frames = 100000000
     while num_frames < max_frames: # True
         ret, frame = video.read()
         if type(frame) == np.ndarray:
