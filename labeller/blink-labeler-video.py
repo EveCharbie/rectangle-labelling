@@ -10,12 +10,14 @@ import tkinter as tk
 from tkinter import filedialog
 
 
-def load_video_frames(video_file):
+def load_video_frames(video_file, max_frames=None):
 
     video = cv2.VideoCapture(video_file)
     frames = []
     num_frames = 0
-    while True:
+    if max_frames == None:
+    	max_frames = 100000000
+    while num_frames < max_frames: # True
         ret, frame = video.read()
         if type(frame) == np.ndarray:
             frames.append(frame)
@@ -99,6 +101,7 @@ world_time_stamps_file = movie_path + "PI world v1 ps1" + '.time'
 right_eye_time_stamps_file = movie_path + "PI right v1 ps1" + '.time'
 left_eye_time_stamps_file = movie_path + "PI left v1 ps1" + '.time'
 
+# GuSe : 2000, 11000
 frames, num_frames = load_video_frames(movie_file)
 frames_right_eye, num_frames_right_eye = load_video_frames(movie_file_right_eye)
 frames_left_eye, num_frames_left_eye = load_video_frames(movie_file_left_eye)
